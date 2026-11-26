@@ -76,6 +76,11 @@ names. Before the first observation or input action, the host must report
 The same route and binding contract applies to an explicit DCC-CUA request for
 a browser or another non-DCC application.
 
+The CLI and DCC-CUA host are versioned release artifacts. On Windows, the
+DCC-MCP server bundle carries the native UI Control host beside the server and
+adapter runtime. Keep the CLI update flow and host bundle deployment aligned
+with the release manifest used by the target environment.
+
 ## MCP calls
 
 ```bash

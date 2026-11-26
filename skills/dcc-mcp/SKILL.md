@@ -214,9 +214,9 @@ Control:
 Shell agents should use the stable CLI wrapper instead of hand-building legacy
 tool slugs. Before the first observation or input action, the DCC-CUA host
 must report `provider=dcc-cua`, its runtime version, and the exact target PID
-and HWND. No UI action is valid without all four bindings. This requirement
-also applies when an explicit DCC-CUA request targets a browser or another
-non-DCC application through the project `ui-control` route.
+and HWND. The CLI forwards the scoped request and preserves these bindings.
+This requirement also applies when an explicit DCC-CUA request targets a
+browser or another non-DCC application through the project `ui-control` route.
 
 ```bash
 dccmcp ui-control snapshot --instance-id <id> \
@@ -235,8 +235,8 @@ Use `ui-control wait` for condition-based waits. Every subcommand accepts
 `--dcc-type`, `--json-file`, `--meta-json`, and `--timeout-secs` with the same
 meaning as `call`.
 
-DCCMCP does not implement desktop input itself. The CLI validates and routes
-the request, while the DCC-CUA host performs the scoped operation. The only
+DCCMCP is the control plane for desktop input. The CLI routes the request and
+preserves its scope, while the DCC-CUA host performs the scoped operation. The only
 valid sequence is `snapshot -> find -> one act -> snapshot -> stop`. A
 `policy_disabled`, `permission_denied`, `authentication`, `confirmation`,
 `desktop_unavailable`, or `user_interrupted` result stops the workflow. Do not
