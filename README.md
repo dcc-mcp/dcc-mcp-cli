@@ -28,7 +28,7 @@ Existing scripts can keep invoking `dcc-mcp-cli`. Update their installation
 source to `https://github.com/dcc-mcp/dcc-mcp-cli` before removing the old Core
 CLI package.
 
-## Version 0.21.1
+## Version 0.21.2
 
 This release completes the post-boundary CLI maintenance flow.
 

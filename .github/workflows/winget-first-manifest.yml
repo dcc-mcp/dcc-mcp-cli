@@ -12,12 +12,12 @@ name: WinGet First Manifest
 # open a duplicate PR.
 #
 # Run it from the CLI repository's Actions tab once the release you want to publish exists:
-#   release_tag = v0.21.1 (or newer), dry_run = true, then dry_run = false.
+#   release_tag = v0.21.2 (or newer), dry_run = true, then dry_run = false.
 on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: "Release tag to publish, for example v0.21.1"
+        description: "Release tag to publish, for example v0.21.2"
         required: true
         type: string
       dry_run:
