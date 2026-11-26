@@ -11,11 +11,17 @@ on:
         type: string
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   build:
     name: Build ${{ matrix.platform }}
+    permissions:
+      contents: write
     env:
       DCC_MCP_ADMIN_UI_PREBUILT: "1"
     strategy:
@@ -36,13 +42,14 @@ jobs:
             executable_suffix: '.exe'
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ inputs.tag || github.ref_name }}
-      - uses: actions/setup-python@v5
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.11'
-      - uses: dtolnay/rust-toolchain@1.95.0
+      - uses: dtolnay/rust-toolchain@1961bfc0c4a8bf07e0a0c98e1e2459c642ea70a0 # 1.95.0
       - name: Pin Windows build to MSVC
         if: runner.os == 'Windows'
         shell: pwsh
@@ -64,7 +71,7 @@ jobs:
             target_args=(--target x86_64-pc-windows-msvc)
             output_dir="target/x86_64-pc-windows-msvc/release"
           fi
-          cargo build --release "${target_args[@]}" -p dcc-mcp-cli --bin dccmcp --bin dcc-mcp-cli
+          cargo build --release --locked "${target_args[@]}" -p dcc-mcp-cli --bin dccmcp --bin dcc-mcp-cli
           cp "$output_dir/dccmcp${{ matrix.executable_suffix }}" "dccmcp-${{ matrix.platform }}${{ matrix.executable_suffix }}"
           cp "$output_dir/dcc-mcp-cli${{ matrix.executable_suffix }}" "dcc-mcp-cli-${{ matrix.platform }}${{ matrix.executable_suffix }}"
       - name: Build macOS universal2 binaries
@@ -72,20 +79,22 @@ jobs:
         shell: bash
         run: |
           rustup target add x86_64-apple-darwin aarch64-apple-darwin
-          cargo build --release --target x86_64-apple-darwin -p dcc-mcp-cli --bin dccmcp --bin dcc-mcp-cli
-          cargo build --release --target aarch64-apple-darwin -p dcc-mcp-cli --bin dccmcp --bin dcc-mcp-cli
+          cargo build --release --locked --target x86_64-apple-darwin -p dcc-mcp-cli --bin dccmcp --bin dcc-mcp-cli
+          cargo build --release --locked --target aarch64-apple-darwin -p dcc-mcp-cli --bin dccmcp --bin dcc-mcp-cli
           lipo -create -output dccmcp-${{ matrix.platform }} target/x86_64-apple-darwin/release/dccmcp target/aarch64-apple-darwin/release/dccmcp
           lipo -create -output dcc-mcp-cli-${{ matrix.platform }} target/x86_64-apple-darwin/release/dcc-mcp-cli target/aarch64-apple-darwin/release/dcc-mcp-cli
       - name: Build release archives
+        env:
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
         shell: bash
         run: |
-          version="${GITHUB_REF_NAME#v}"
+          version="${RELEASE_TAG#v}"
           python scripts/release/build_cli_bundle.py --version "$version" --platform "${{ matrix.platform }}" --cli-bin "dccmcp-${{ matrix.platform }}${{ matrix.executable_suffix }}" --name-prefix dccmcp --out-dir .
           python scripts/release/build_cli_bundle.py --version "$version" --platform "${{ matrix.platform }}" --cli-bin "dcc-mcp-cli-${{ matrix.platform }}${{ matrix.executable_suffix }}" --name-prefix dcc-mcp-cli --out-dir .
-          python scripts/release/generate_update_manifest.py --version "$version" --platform "${{ matrix.platform }}" --release-tag "$GITHUB_REF_NAME" --dccmcp-bin "dccmcp-${{ matrix.platform }}${{ matrix.executable_suffix }}" --compatibility-bin "dcc-mcp-cli-${{ matrix.platform }}${{ matrix.executable_suffix }}" --out-dir .
+          python scripts/release/generate_update_manifest.py --version "$version" --platform "${{ matrix.platform }}" --release-tag "$RELEASE_TAG" --dccmcp-bin "dccmcp-${{ matrix.platform }}${{ matrix.executable_suffix }}" --compatibility-bin "dcc-mcp-cli-${{ matrix.platform }}${{ matrix.executable_suffix }}" --out-dir .
           python scripts/release/generate_asset_checksums.py --output "dcc-mcp-cli-release-checksums-${{ matrix.platform }}.txt" --asset "dccmcp-${{ matrix.platform }}${{ matrix.executable_suffix }}" --asset "dcc-mcp-cli-${{ matrix.platform }}${{ matrix.executable_suffix }}" --asset "dccmcp-${version}-${{ matrix.platform }}.zip" --asset "dcc-mcp-cli-${version}-${{ matrix.platform }}.zip" --asset "dcc-mcp-update-manifest-${{ matrix.platform }}.json"
       - name: Upload release assets
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           tag_name: ${{ inputs.tag || github.ref_name }}
           files: |
@@ -96,3 +105,162 @@ jobs:
             dcc-mcp-update-manifest-${{ matrix.platform }}.json
             dcc-mcp-cli-release-checksums-${{ matrix.platform }}.txt
             *.sha256
+
+  # WinGet and Homebrew consume the standalone CLI release. Core owns the
+  # gateway/server runtime and does not publish package-manager entries for the
+  # CLI after the 0.21.0 repository split.
+  publish-winget:
+    name: Publish WinGet update
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v') || inputs.tag != ''
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    env:
+      WINGET_IDENTIFIER: DccMcp.DccMcpCli
+      RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+    steps:
+      - name: Check WinGet token
+        id: check_token
+        shell: bash
+        env:
+          WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
+        run: |
+          if [ -z "$WINGET_TOKEN" ]; then
+            echo "::warning::WINGET_TOKEN is not configured; skipping WinGet publication"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        if: steps.check_token.outputs.skip != 'true'
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        if: steps.check_token.outputs.skip != 'true'
+        with:
+          python-version: "3.11"
+      - name: Read the release
+        if: steps.check_token.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json tagName,publishedAt,assets > release.json
+      - name: Derive the release version
+        if: steps.check_token.outputs.skip != 'true'
+        id: version
+        shell: bash
+        run: echo "version=${RELEASE_TAG#v}" >> "$GITHUB_OUTPUT"
+      - name: Check WinGet package onboarding
+        if: steps.check_token.outputs.skip != 'true'
+        id: onboarding
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.WINGET_TOKEN }}
+        run: |
+          set -euo pipefail
+          path="manifests/d/DccMcp/DccMcpCli"
+          status=0
+          gh api "repos/microsoft/winget-pkgs/contents/$path" >/dev/null 2>winget-api.err || status=$?
+          if [ "$status" -eq 0 ]; then
+            echo "onboarded=true" >> "$GITHUB_OUTPUT"
+          elif grep -q 'HTTP 404' winget-api.err; then
+            echo "onboarded=false" >> "$GITHUB_OUTPUT"
+          else
+            cat winget-api.err
+            echo "::error::could not determine WinGet onboarding state"
+            exit 1
+          fi
+      - name: Report pending WinGet onboarding
+        if: steps.check_token.outputs.skip != 'true' && steps.onboarding.outputs.onboarded == 'false'
+        shell: bash
+        run: echo "::warning::${WINGET_IDENTIFIER} is not onboarded in microsoft/winget-pkgs; run winget-first-manifest.yml once before release updates."
+      - name: Publish to WinGet
+        if: steps.check_token.outputs.skip != 'true' && steps.onboarding.outputs.onboarded == 'true'
+        uses: dcc-mcp/winget-releaser@d1b420769e4f42cdaf1990aee944be5076a524ca
+        with:
+          identifier: ${{ env.WINGET_IDENTIFIER }}
+          fork-user: loonghao
+          release-tag: ${{ env.RELEASE_TAG }}
+          version: ${{ steps.version.outputs.version }}
+          installers-regex: 'dccmcp-.*-windows-x86_64\.zip$'
+          token: ${{ secrets.WINGET_TOKEN }}
+
+  publish-homebrew:
+    name: Publish Homebrew tap formula
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v') || inputs.tag != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+      TAP_REPOSITORY: dcc-mcp/homebrew-tap
+    steps:
+      - name: Check Homebrew tap token
+        id: check_token
+        shell: bash
+        env:
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          if [ -z "$HOMEBREW_TAP_TOKEN" ]; then
+            echo "::warning::HOMEBREW_TAP_TOKEN is not configured; skipping Homebrew publication"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        if: steps.check_token.outputs.skip != 'true'
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        if: steps.check_token.outputs.skip != 'true'
+        with:
+          python-version: "3.11"
+      - name: Download the macOS release asset
+        if: steps.check_token.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          gh release download "$RELEASE_TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --pattern 'dccmcp-macos-universal2' \
+            --dir "$RUNNER_TEMP/dccmcp-release"
+      - name: Generate and validate the formula
+        if: steps.check_token.outputs.skip != 'true'
+        shell: bash
+        run: |
+          asset="$RUNNER_TEMP/dccmcp-release/dccmcp-macos-universal2"
+          version="${RELEASE_TAG#v}"
+          sha256="$(sha256sum "$asset" | cut -d ' ' -f 1)"
+          python scripts/release/generate_homebrew_formula.py \
+            --version "$version" \
+            --url "https://github.com/$GITHUB_REPOSITORY/releases/download/$RELEASE_TAG/dccmcp-macos-universal2" \
+            --sha256 "$sha256" \
+            --output "$RUNNER_TEMP/dccmcp.rb"
+          ruby -c "$RUNNER_TEMP/dccmcp.rb"
+      - name: Update the Homebrew tap
+        if: steps.check_token.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tap="$RUNNER_TEMP/homebrew-tap"
+          gh repo clone "$TAP_REPOSITORY" "$tap"
+          gh auth setup-git
+          mkdir -p "$tap/Formula"
+          cp "$RUNNER_TEMP/dccmcp.rb" "$tap/Formula/dccmcp.rb"
+          cd "$tap"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- Formula/dccmcp.rb; then
+            echo "Homebrew formula already points at $RELEASE_TAG"
+            exit 0
+          fi
+          git add Formula/dccmcp.rb
+          git commit -m "chore: update dccmcp to ${RELEASE_TAG#v}"
+          git push origin HEAD:main
