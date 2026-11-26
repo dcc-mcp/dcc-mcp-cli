@@ -23,7 +23,7 @@ clap = { version = "4", features = ["derive", "env"] }
 dcc-mcp-catalog.workspace = true
 dcc-mcp-client.workspace = true
 dcc-mcp-gateway-ensure.workspace = true
-dcc-mcp-sidecar = { workspace = true, default-features = false, features = ["gateway-daemon", "admin"] }
+dcc-mcp-sidecar = { git = "https://github.com/dcc-mcp/dcc-mcp-core.git", branch = "task/dccmcp-cli-split", default-features = false, features = ["gateway-daemon", "admin"] }
 dcc-mcp-transport.workspace = true
 dcc-mcp-updater.workspace = true
 dcc-mcp-marketplace.workspace = true

@@ -16,6 +16,8 @@ permissions:
 jobs:
   build:
     name: Build ${{ matrix.platform }}
+    env:
+      DCC_MCP_ADMIN_UI_PREBUILT: "1"
     strategy:
       fail-fast: false
       matrix:

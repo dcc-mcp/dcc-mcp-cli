@@ -11,6 +11,8 @@ permissions:
 jobs:
   rust:
     name: Rust (${{ matrix.os }})
+    env:
+      DCC_MCP_ADMIN_UI_PREBUILT: "1"
     strategy:
       fail-fast: false
       matrix:
