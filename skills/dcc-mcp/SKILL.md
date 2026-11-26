@@ -47,8 +47,8 @@ Existing installations can use the compatibility alias `dcc-mcp-cli`. These
 commands remain supported during migration.
 
 ```bash
-dcc-mcp-cli dcc-types
-dcc-mcp-cli stats --range 24h --dcc-type maya --session-id task-42
+dccmcp dcc-types
+dccmcp stats --range 24h --dcc-type maya --session-id task-42
 ```
 
 Use this skill whenever the user asks to operate a supported DCC application.
