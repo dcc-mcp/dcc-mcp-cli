@@ -18,7 +18,7 @@ One-line install:
   curl -fsSL https://raw.githubusercontent.com/dcc-mcp/dcc-mcp-cli/main/scripts/install-cli.sh | bash
 
 Environment:
-  DCC_MCP_REPO         GitHub repo, default dcc-mcp/dcc-mcp-core
+  DCC_MCP_REPO         GitHub repo, default dcc-mcp/dcc-mcp-cli
   DCC_MCP_VERSION      Release tag, default latest
   DCC_MCP_INSTALL_DIR  Install directory, default ~/.local/bin
   DCC_MCP_RELEASE_FALLBACK
