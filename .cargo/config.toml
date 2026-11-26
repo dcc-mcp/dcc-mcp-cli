@@ -1,0 +1,10 @@
+# Keep debug and test binaries stack-safe for the large gateway dependency graph.
+[profile.dev]
+opt-level = 1
+codegen-units = 16
+debug = 1
+
+[profile.test]
+opt-level = 1
+codegen-units = 16
+debug = 1

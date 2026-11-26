@@ -147,7 +147,7 @@ impl DccMcpClient {
 
     async fn call_mcp_tool(&self, request: CallRequest) -> Result<Value, ClientError> {
         let tool_slug = request.tool_slug;
-        let mut client = McpHttpClient::with_timeout(&self.endpoint.mcp_url(), self.timeout)
+        let mut client = McpHttpClient::with_timeout(self.endpoint.mcp_url(), self.timeout)
             .map_err(|error| ClientError::Protocol(error.to_string()))?;
         let result = serde_json::to_value(
             client

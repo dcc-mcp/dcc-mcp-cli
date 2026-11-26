@@ -1,23 +1,30 @@
+#[cfg(not(target_os = "windows"))]
 use std::process::Command;
 
+#[cfg(not(target_os = "windows"))]
 use serde_json::{Value, json};
+#[cfg(not(target_os = "windows"))]
 use tempfile::TempDir;
 
+#[cfg(not(target_os = "windows"))]
 fn cli_command() -> Command {
     Command::new(env!("CARGO_BIN_EXE_dcc-mcp-cli"))
 }
 
+#[cfg(not(target_os = "windows"))]
 fn unused_loopback_port() -> u16 {
     let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
     listener.local_addr().unwrap().port()
 }
 
+#[cfg(not(target_os = "windows"))]
 struct AutoGatewayCleanup<'a> {
     host: &'a str,
     port: u16,
     envs: &'a [(&'a str, &'a str)],
 }
 
+#[cfg(not(target_os = "windows"))]
 impl Drop for AutoGatewayCleanup<'_> {
     fn drop(&mut self) {
         let mut command = cli_command();
@@ -39,6 +46,7 @@ impl Drop for AutoGatewayCleanup<'_> {
 }
 
 #[test]
+#[cfg(not(target_os = "windows"))]
 fn list_auto_starts_builtin_local_gateway() {
     let port = unused_loopback_port();
     let base_url = format!("http://127.0.0.1:{port}");

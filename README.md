@@ -41,16 +41,40 @@ install a specific release.
 
 ## Update
 
-The supported update flow is:
+The normal self-update flow is:
+
+```bash
+dccmcp update
+```
+
+This checks the release manifest, downloads the platform asset, verifies its
+SHA-256 digest, and stages the binary for the next launch. Use the explicit
+forms when a read-only or operator-controlled step is required:
 
 ```bash
 dccmcp update check
 dccmcp update apply
+
+# Best-effort self-update before an ordinary command.
+dccmcp --auto-update list
 ```
 
-`update apply` stages the binary for the next launch. The release workflow
-publishes platform assets, ZIP archives, SHA-256 sidecars, and update
-manifests for each release.
+Set `DCC_MCP_CLI_AUTO_UPDATE=true` to enable the same best-effort behavior for
+ordinary commands. Existing staged updates are reused. Automatic update
+failures are reported as warnings and do not block the current command. The
+release workflow publishes platform assets, ZIP archives, SHA-256 sidecars,
+and update manifests for each release.
+
+## DCC UI Control and DCC-CUA
+
+`dccmcp` is the control plane for the stable `ui-control` route. The project
+owned DCC-CUA host performs exact-window binding, screenshots, UI Automation,
+native input, visible safety effects, user interruption, and audit logging.
+MCP-native clients may continue to use the compatibility `app_ui__*` tool
+names. Before the first observation or input action, the host must report
+`provider=dcc-cua`, its runtime version, and the exact target PID and HWND.
+The same route and binding contract applies to an explicit DCC-CUA request for
+a browser or another non-DCC application.
 
 ## MCP calls
 

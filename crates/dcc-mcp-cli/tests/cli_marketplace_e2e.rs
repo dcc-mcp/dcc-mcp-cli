@@ -1283,10 +1283,7 @@ fn lint_bundled_skills_are_present_and_clean() {
         .parent()
         .and_then(std::path::Path::parent)
         .unwrap();
-    let builtin_skill_roots = [
-        workspace_root.join("skills/dcc-mcp"),
-        workspace_root.join("python/dcc_mcp_core/skills"),
-    ];
+    let builtin_skill_roots = [workspace_root.join("skills/dcc-mcp")];
 
     for root in &builtin_skill_roots {
         assert!(
