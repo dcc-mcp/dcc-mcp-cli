@@ -64,6 +64,11 @@ The installer places `dccmcp` on `PATH` and creates the `dcc-mcp-cli`
 compatibility alias beside it. Set `DCC_MCP_VERSION` or pass `--version` to
 install a specific release.
 
+Windows users can install the published package with
+`winget install --id DccMcp.DccMcpCli --exact` when WinGet has accepted the
+package. macOS users can install the maintained formula with
+`brew tap dcc-mcp/tap && brew install dccmcp`.
+
 ## Update
 
 The normal self-update flow is:
@@ -89,6 +94,9 @@ ordinary commands. Existing staged updates are reused. Automatic update
 failures are reported as warnings and do not block the current command. The
 release workflow publishes platform assets, ZIP archives, SHA-256 sidecars,
 and update manifests for each release.
+
+Package-manager upgrades use `winget upgrade --id DccMcp.DccMcpCli --exact` or
+`brew upgrade dccmcp`.
 
 ## DCC UI Control and DCC-CUA
 

@@ -20,12 +20,12 @@ metadata:
     dcc: python
     layer: infrastructure
     compatibility: Cross-platform Windows/macOS/Linux. Prefers dccmcp on PATH; can download release asset from GitHub; local profile needs no gateway env. DCC_MCP_BASE_URL is optional for remote/legacy gateway REST fallback.
-    version: "0.21.0"  # x-release-please-version
+    version: "0.21.1"  # x-release-please-version
     search-hint: "dcc control operate UI control menu dialog window button click keyboard Maya Blender Houdini Photoshop 3ds Max Nuke Unreal Godot RenderDoc Substance connect create edit render automate cli gateway stats 操作 控制 界面 菜单 弹窗 窗口 按钮 点击 键盘"
     tags: "dcc, dcc-ui-control, ui-control, maya, blender, houdini, photoshop, nuke, unreal, godot, renderdoc, cli, gateway, clawhub, openclaw"
   openclaw:
     emoji: "🖥️"
-    homepage: https://github.com/dcc-mcp/dcc-mcp-core/blob/main/skills/dcc-mcp/SKILL.md
+    homepage: https://github.com/dcc-mcp/dcc-mcp-cli/blob/main/skills/dcc-mcp/SKILL.md
 ---
 
 # DCCMCP — Default DCC Control
@@ -146,11 +146,19 @@ latest official release:
 
 ```bash
 # Linux/macOS
-curl -fsSL https://raw.githubusercontent.com/dcc-mcp/dcc-mcp-cli/main/scripts/install-cli.sh | sh
+curl -fL https://raw.githubusercontent.com/dcc-mcp/dcc-mcp-cli/main/scripts/install-cli.sh -o install-cli.sh
+cat install-cli.sh
+sh ./install-cli.sh
 
 # Windows PowerShell
-powershell -ExecutionPolicy Bypass -c "irm https://raw.githubusercontent.com/dcc-mcp/dcc-mcp-cli/main/scripts/install-cli.ps1 | iex"
+Invoke-WebRequest https://raw.githubusercontent.com/dcc-mcp/dcc-mcp-cli/main/scripts/install-cli.ps1 -OutFile .\install-cli.ps1
+Get-Content -Raw .\install-cli.ps1
+& .\install-cli.ps1
 ```
+
+On Windows, the published WinGet package can be installed with
+`winget install --id DccMcp.DccMcpCli --exact` when the package is available.
+On macOS, use `brew tap dcc-mcp/tap && brew install dccmcp`.
 
 After installation, use `dccmcp update` for the normal self-update flow. It
 checks the release manifest, downloads the platform asset, verifies its

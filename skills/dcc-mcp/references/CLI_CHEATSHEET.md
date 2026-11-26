@@ -26,11 +26,18 @@ official release:
 
 ```bash
 # Linux/macOS
-curl -fsSL https://raw.githubusercontent.com/dcc-mcp/dcc-mcp-cli/main/scripts/install-cli.sh | sh
+curl -fL https://raw.githubusercontent.com/dcc-mcp/dcc-mcp-cli/main/scripts/install-cli.sh -o install-cli.sh
+cat install-cli.sh
+sh ./install-cli.sh
 
 # Windows PowerShell
-powershell -ExecutionPolicy Bypass -c "irm https://raw.githubusercontent.com/dcc-mcp/dcc-mcp-cli/main/scripts/install-cli.ps1 | iex"
+Invoke-WebRequest https://raw.githubusercontent.com/dcc-mcp/dcc-mcp-cli/main/scripts/install-cli.ps1 -OutFile .\install-cli.ps1
+Get-Content -Raw .\install-cli.ps1
+& .\install-cli.ps1
 ```
+
+Package manager routes use `winget install --id DccMcp.DccMcpCli --exact` on
+Windows and `brew tap dcc-mcp/tap && brew install dccmcp` on macOS.
 
 Keep an official build current through the release manifest:
 
