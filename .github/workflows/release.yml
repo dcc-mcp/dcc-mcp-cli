@@ -43,8 +43,6 @@ jobs:
         with:
           python-version: '3.11'
       - uses: dtolnay/rust-toolchain@1.95.0
-        with:
-          targets: ${{ matrix.target != 'native' && matrix.target || 'aarch64-apple-darwin' }}
       - name: Pin Windows build to MSVC
         if: runner.os == 'Windows'
         shell: pwsh
