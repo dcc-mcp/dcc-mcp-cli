@@ -11,16 +11,16 @@ license = "MIT"
 repository = "https://github.com/dcc-mcp/dcc-mcp-cli"
 
 [workspace.dependencies]
-dcc-mcp-core-repository = { package = "dcc-mcp-core", git = "https://github.com/dcc-mcp/dcc-mcp-core.git", branch = "task/dccmcp-cli-split" }
-dcc-mcp-catalog = { git = "https://github.com/dcc-mcp/dcc-mcp-core.git", branch = "task/dccmcp-cli-split" }
-dcc-mcp-client = { git = "https://github.com/dcc-mcp/dcc-mcp-core.git", branch = "task/dccmcp-cli-split" }
-dcc-mcp-gateway-ensure = { git = "https://github.com/dcc-mcp/dcc-mcp-core.git", branch = "task/dccmcp-cli-split" }
-dcc-mcp-marketplace = { git = "https://github.com/dcc-mcp/dcc-mcp-core.git", branch = "task/dccmcp-cli-split" }
-dcc-mcp-models = { git = "https://github.com/dcc-mcp/dcc-mcp-core.git", branch = "task/dccmcp-cli-split" }
-dcc-mcp-sidecar = { git = "https://github.com/dcc-mcp/dcc-mcp-core.git", branch = "task/dccmcp-cli-split" }
-dcc-mcp-skills = { git = "https://github.com/dcc-mcp/dcc-mcp-core.git", branch = "task/dccmcp-cli-split" }
-dcc-mcp-transport = { git = "https://github.com/dcc-mcp/dcc-mcp-core.git", branch = "task/dccmcp-cli-split" }
-dcc-mcp-updater = { git = "https://github.com/dcc-mcp/dcc-mcp-core.git", branch = "task/dccmcp-cli-split" }
+dcc-mcp-core-repository = { package = "dcc-mcp-core", git = "https://github.com/dcc-mcp/dcc-mcp-core.git", tag = "v0.21.0" }
+dcc-mcp-catalog = { git = "https://github.com/dcc-mcp/dcc-mcp-core.git", tag = "v0.21.0" }
+dcc-mcp-client = { git = "https://github.com/dcc-mcp/dcc-mcp-core.git", tag = "v0.21.0" }
+dcc-mcp-gateway-ensure = { git = "https://github.com/dcc-mcp/dcc-mcp-core.git", tag = "v0.21.0" }
+dcc-mcp-marketplace = { git = "https://github.com/dcc-mcp/dcc-mcp-core.git", tag = "v0.21.0" }
+dcc-mcp-models = { git = "https://github.com/dcc-mcp/dcc-mcp-core.git", tag = "v0.21.0" }
+dcc-mcp-sidecar = { git = "https://github.com/dcc-mcp/dcc-mcp-core.git", tag = "v0.21.0" }
+dcc-mcp-skills = { git = "https://github.com/dcc-mcp/dcc-mcp-core.git", tag = "v0.21.0" }
+dcc-mcp-transport = { git = "https://github.com/dcc-mcp/dcc-mcp-core.git", tag = "v0.21.0" }
+dcc-mcp-updater = { git = "https://github.com/dcc-mcp/dcc-mcp-core.git", tag = "v0.21.0" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tokio = { version = "1.0", features = ["net", "rt-multi-thread", "sync", "time", "macros", "io-util", "signal"] }
