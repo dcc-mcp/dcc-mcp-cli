@@ -1,0 +1,34 @@
+[workspace]
+members = ["crates/dcc-mcp-cli"]
+resolver = "2"
+
+[workspace.package]
+version = "0.21.0"
+edition = "2024"
+rust-version = "1.95"
+authors = ["Hal Long <hal.long@outlook.com>"]
+license = "MIT"
+repository = "https://github.com/dcc-mcp/dcc-mcp-cli"
+
+[workspace.dependencies]
+dcc-mcp-core-repository = { package = "dcc-mcp-core", git = "https://github.com/dcc-mcp/dcc-mcp-core.git", branch = "task/dccmcp-cli-split" }
+dcc-mcp-catalog = { git = "https://github.com/dcc-mcp/dcc-mcp-core.git", branch = "task/dccmcp-cli-split" }
+dcc-mcp-client = { git = "https://github.com/dcc-mcp/dcc-mcp-core.git", branch = "task/dccmcp-cli-split" }
+dcc-mcp-gateway-ensure = { git = "https://github.com/dcc-mcp/dcc-mcp-core.git", branch = "task/dccmcp-cli-split" }
+dcc-mcp-marketplace = { git = "https://github.com/dcc-mcp/dcc-mcp-core.git", branch = "task/dccmcp-cli-split" }
+dcc-mcp-models = { git = "https://github.com/dcc-mcp/dcc-mcp-core.git", branch = "task/dccmcp-cli-split" }
+dcc-mcp-sidecar = { git = "https://github.com/dcc-mcp/dcc-mcp-core.git", branch = "task/dccmcp-cli-split" }
+dcc-mcp-skills = { git = "https://github.com/dcc-mcp/dcc-mcp-core.git", branch = "task/dccmcp-cli-split" }
+dcc-mcp-transport = { git = "https://github.com/dcc-mcp/dcc-mcp-core.git", branch = "task/dccmcp-cli-split" }
+dcc-mcp-updater = { git = "https://github.com/dcc-mcp/dcc-mcp-core.git", branch = "task/dccmcp-cli-split" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1.0", features = ["net", "rt-multi-thread", "sync", "time", "macros", "io-util", "signal"] }
+reqwest = { version = "0.13", default-features = false, features = ["blocking", "json", "stream", "rustls"] }
+thiserror = "2.0"
+anyhow = "1.0"
+base64 = "0.22"
+dirs = "6.0"
+sha2 = "0.11"
+tempfile = "3"
+zip = { version = "2", default-features = false, features = ["deflate"] }

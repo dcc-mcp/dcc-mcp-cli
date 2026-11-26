@@ -1,0 +1,46 @@
+[package]
+name = "dcc-mcp-cli"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "DCCMCP command-line control plane for DCC discovery, MCP calls, gateway operations, and skill installation"
+
+[[bin]]
+name = "dccmcp"
+path = "src/main.rs"
+
+[[bin]]
+name = "dcc-mcp-cli"
+path = "src/bin/dcc-mcp-cli.rs"
+
+[dependencies]
+anyhow.workspace = true
+base64.workspace = true
+clap = { version = "4", features = ["derive", "env"] }
+dcc-mcp-catalog.workspace = true
+dcc-mcp-client.workspace = true
+dcc-mcp-gateway-ensure.workspace = true
+dcc-mcp-sidecar = { workspace = true, default-features = false, features = ["gateway-daemon", "admin"] }
+dcc-mcp-transport.workspace = true
+dcc-mcp-updater.workspace = true
+dcc-mcp-marketplace.workspace = true
+dcc-mcp-models.workspace = true
+dcc-mcp-skills.workspace = true
+dirs.workspace = true
+reqwest.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+tempfile.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+zip.workspace = true
+
+[dev-dependencies]
+axum = { version = "0.8", features = ["http1", "tokio"] }
+dcc-mcp-actions = { git = "https://github.com/dcc-mcp/dcc-mcp-core.git", branch = "task/dccmcp-cli-split" }
+dcc-mcp-http = { git = "https://github.com/dcc-mcp/dcc-mcp-core.git", branch = "task/dccmcp-cli-split" }
+hex = "0.4"

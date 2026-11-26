@@ -1,0 +1,98 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing tag to package
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.platform }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux-x86_64
+            target: native
+            executable_suffix: ''
+          - os: macos-latest
+            platform: macos-universal2
+            target: universal2
+            executable_suffix: ''
+          - os: windows-latest
+            platform: windows-x86_64
+            target: x86_64-pc-windows-msvc
+            executable_suffix: '.exe'
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: dtolnay/rust-toolchain@1.95.0
+        with:
+          targets: ${{ matrix.target != 'native' && matrix.target || 'aarch64-apple-darwin' }}
+      - name: Pin Windows build to MSVC
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $target = "x86_64-pc-windows-msvc"
+          rustup target add $target
+          "CARGO_BUILD_TARGET=$target" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $hostTarget = (rustc -vV | Select-String "host:").ToString().Split(':', 2)[1].Trim()
+          if ($hostTarget -ne $target) {
+            throw "Expected $target, got $hostTarget"
+          }
+      - name: Build Linux or Windows binaries
+        if: matrix.target == 'native' || runner.os == 'Windows'
+        shell: bash
+        run: |
+          target_args=()
+          output_dir="target/release"
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            target_args=(--target x86_64-pc-windows-msvc)
+            output_dir="target/x86_64-pc-windows-msvc/release"
+          fi
+          cargo build --release "${target_args[@]}" -p dcc-mcp-cli --bin dccmcp --bin dcc-mcp-cli
+          cp "$output_dir/dccmcp${{ matrix.executable_suffix }}" "dccmcp-${{ matrix.platform }}${{ matrix.executable_suffix }}"
+          cp "$output_dir/dcc-mcp-cli${{ matrix.executable_suffix }}" "dcc-mcp-cli-${{ matrix.platform }}${{ matrix.executable_suffix }}"
+      - name: Build macOS universal2 binaries
+        if: matrix.target == 'universal2'
+        shell: bash
+        run: |
+          rustup target add x86_64-apple-darwin aarch64-apple-darwin
+          cargo build --release --target x86_64-apple-darwin -p dcc-mcp-cli --bin dccmcp --bin dcc-mcp-cli
+          cargo build --release --target aarch64-apple-darwin -p dcc-mcp-cli --bin dccmcp --bin dcc-mcp-cli
+          lipo -create -output dccmcp-${{ matrix.platform }} target/x86_64-apple-darwin/release/dccmcp target/aarch64-apple-darwin/release/dccmcp
+          lipo -create -output dcc-mcp-cli-${{ matrix.platform }} target/x86_64-apple-darwin/release/dcc-mcp-cli target/aarch64-apple-darwin/release/dcc-mcp-cli
+      - name: Build release archives
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          python scripts/release/build_cli_bundle.py --version "$version" --platform "${{ matrix.platform }}" --cli-bin "dccmcp-${{ matrix.platform }}${{ matrix.executable_suffix }}" --name-prefix dccmcp --out-dir .
+          python scripts/release/build_cli_bundle.py --version "$version" --platform "${{ matrix.platform }}" --cli-bin "dcc-mcp-cli-${{ matrix.platform }}${{ matrix.executable_suffix }}" --name-prefix dcc-mcp-cli --out-dir .
+          python scripts/release/generate_update_manifest.py --version "$version" --platform "${{ matrix.platform }}" --release-tag "$GITHUB_REF_NAME" --dccmcp-bin "dccmcp-${{ matrix.platform }}${{ matrix.executable_suffix }}" --compatibility-bin "dcc-mcp-cli-${{ matrix.platform }}${{ matrix.executable_suffix }}" --out-dir .
+          python scripts/release/generate_asset_checksums.py --output "dcc-mcp-cli-release-checksums-${{ matrix.platform }}.txt" --asset "dccmcp-${{ matrix.platform }}${{ matrix.executable_suffix }}" --asset "dcc-mcp-cli-${{ matrix.platform }}${{ matrix.executable_suffix }}" --asset "dccmcp-${version}-${{ matrix.platform }}.zip" --asset "dcc-mcp-cli-${version}-${{ matrix.platform }}.zip" --asset "dcc-mcp-update-manifest-${{ matrix.platform }}.json"
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.tag || github.ref_name }}
+          files: |
+            dccmcp-${{ matrix.platform }}${{ matrix.executable_suffix }}
+            dcc-mcp-cli-${{ matrix.platform }}${{ matrix.executable_suffix }}
+            dccmcp-*.zip
+            dcc-mcp-cli-*.zip
+            dcc-mcp-update-manifest-${{ matrix.platform }}.json
+            dcc-mcp-cli-release-checksums-${{ matrix.platform }}.txt
+            *.sha256

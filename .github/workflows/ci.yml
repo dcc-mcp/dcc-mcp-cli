@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  rust:
+    name: Rust (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: native
+          - os: macos-latest
+            target: native
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.95.0
+        with:
+          targets: ${{ matrix.target != 'native' && matrix.target || '' }}
+          components: rustfmt, clippy
+      - name: Verify Windows uses MSVC
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $hostTarget = (rustc -vV | Select-String "host:").ToString().Split(':', 2)[1].Trim()
+          if ($hostTarget -ne "x86_64-pc-windows-msvc") {
+            throw "Expected x86_64-pc-windows-msvc, got $hostTarget"
+          }
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+      - name: Build and test
+        shell: bash
+        run: |
+          if [ "${{ matrix.target }}" = "native" ]; then
+            cargo test -p dcc-mcp-cli --tests
+            cargo clippy -p dcc-mcp-cli --all-targets -- -D warnings
+          else
+            cargo test -p dcc-mcp-cli --tests --target "${{ matrix.target }}"
+            cargo clippy -p dcc-mcp-cli --all-targets --target "${{ matrix.target }}" -- -D warnings
+          fi
+      - name: Verify command names
+        shell: bash
+        run: |
+          if [ "${{ matrix.target }}" = "native" ]; then
+            cargo run -p dcc-mcp-cli --bin dccmcp -- --help
+            cargo run -p dcc-mcp-cli --bin dcc-mcp-cli -- --help
+          else
+            cargo run -p dcc-mcp-cli --target "${{ matrix.target }}" --bin dccmcp -- --help
+            cargo run -p dcc-mcp-cli --target "${{ matrix.target }}" --bin dcc-mcp-cli -- --help
+          fi
