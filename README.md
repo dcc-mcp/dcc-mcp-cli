@@ -152,6 +152,22 @@ cargo test -p dcc-mcp-cli --tests --target x86_64-pc-windows-msvc
 Linux and macOS use their native targets. The release workflow builds the
 Windows artifact with `x86_64-pc-windows-msvc` and does not use the GNU target.
 
+## Package-manager release automation
+
+Each tagged release publishes the standalone CLI assets first, then updates
+the package managers from those immutable assets. The CLI repository requires
+the following repository secrets for the two cross-repository jobs:
+
+- `WINGET_TOKEN` with permission to read `microsoft/winget-pkgs`, push the
+  `loonghao/winget-pkgs` fork, and open the update pull request.
+- `HOMEBREW_TAP_TOKEN` with permission to push `dcc-mcp/homebrew-tap`.
+
+Run `winget-first-manifest.yml` once for the initial `DccMcp.DccMcpCli`
+submission. Later tags use the `publish-winget` job in `release.yml`. Every
+later tag also regenerates `Formula/dccmcp.rb` in the Homebrew tap from the
+published macOS universal2 binary. Missing package-manager credentials skip
+the corresponding job with a warning and do not invalidate the CLI release.
+
 ## Repository boundary
 
 This repository owns the CLI application, command UX, release artifacts,
