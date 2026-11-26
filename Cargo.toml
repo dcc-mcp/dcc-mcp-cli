@@ -3,7 +3,7 @@ members = ["crates/dcc-mcp-cli"]
 resolver = "2"
 
 [workspace.package]
-version = "0.21.0"
+version = "0.21.1"
 edition = "2024"
 rust-version = "1.95"
 authors = ["Hal Long <hal.long@outlook.com>"]
@@ -23,12 +23,14 @@ dcc-mcp-transport = { git = "https://github.com/dcc-mcp/dcc-mcp-core.git", tag =
 dcc-mcp-updater = { git = "https://github.com/dcc-mcp/dcc-mcp-core.git", tag = "v0.21.0" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+semver = "1.0"
 tokio = { version = "1.0", features = ["net", "rt-multi-thread", "sync", "time", "macros", "io-util", "signal"] }
 reqwest = { version = "0.13", default-features = false, features = ["blocking", "json", "stream", "rustls"] }
 thiserror = "2.0"
 anyhow = "1.0"
 base64 = "0.22"
 dirs = "6.0"
+hex = "0.4"
 sha2 = "0.11"
 tempfile = "3"
 zip = { version = "2", default-features = false, features = ["deflate"] }

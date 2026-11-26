@@ -35,6 +35,6 @@
   "permissions": {
     "network": ["mcp-endpoints", "gateway-rest"],
     "filesystem": ["dcc-mcp-registry", "skill-packages", "artifact-output"],
-    "process": ["dccmcp-cli", "dcc-mcp-cli-compatibility-alias"]
+    "process": ["dccmcp", "dcc-mcp-cli"]
   }
 }

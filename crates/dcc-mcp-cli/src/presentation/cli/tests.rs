@@ -102,6 +102,41 @@ fn call_batch_compatibility_alias_still_parses() {
 }
 
 #[test]
+fn dccmcp_cua_forwards_arguments_after_separator() {
+    let args = Args::try_parse_from(["dccmcp", "cua", "--", "manifest"])
+        .expect("parse CUA forwarding command");
+
+    let Command::Cua { args } = args.command else {
+        panic!("expected CUA forwarding command");
+    };
+    assert_eq!(args, vec![std::ffi::OsString::from("manifest")]);
+}
+
+#[test]
+fn dccmcp_update_defaults_to_cli_apply() {
+    let args = Args::try_parse_from(["dccmcp", "update"]).expect("parse default update command");
+    let Command::Update { action: None } = args.command else {
+        panic!("expected update without an explicit action");
+    };
+}
+
+#[test]
+fn dccmcp_update_check_keeps_cli_update_source_by_default() {
+    let args =
+        Args::try_parse_from(["dccmcp", "update", "check"]).expect("parse update check command");
+    let Command::Update {
+        action:
+            Some(UpdateAction::Check {
+                binary: None,
+                current_version: None,
+            }),
+    } = args.command
+    else {
+        panic!("expected default CLI update check");
+    };
+}
+
+#[test]
 fn ui_control_contract_parses_a_stable_snapshot_command() {
     let args = Args::try_parse_from([
         "dcc-mcp-cli",
@@ -487,10 +522,10 @@ fn gateway_endpoint_for_command_ensures_gateway_for_agent_control_commands() {
         gateway_endpoint_for_command(
             DEFAULT_BASE_URL,
             &Command::Update {
-                action: UpdateAction::Check {
+                action: Some(UpdateAction::Check {
                     binary: Some("dcc-mcp-server".to_string()),
                     current_version: Some("0.0.0".to_string()),
-                },
+                }),
             },
             &local,
         )

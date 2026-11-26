@@ -796,7 +796,7 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-cli"
-version = "0.21.0"
+version = "0.21.1"
 dependencies = [
  "anyhow",
  "axum",
@@ -816,6 +816,7 @@ dependencies = [
  "dirs",
  "hex",
  "reqwest 0.13.5",
+ "semver",
  "serde",
  "serde_json",
  "sha2",

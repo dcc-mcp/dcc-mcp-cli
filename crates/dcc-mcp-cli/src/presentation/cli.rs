@@ -1,4 +1,5 @@
 use std::collections::BTreeSet;
+use std::ffi::OsString;
 use std::io::Read;
 use std::path::PathBuf;
 use std::time::Duration;
@@ -62,6 +63,9 @@ pub struct Args {
     auto_gateway_timeout_secs: u64,
     #[arg(long, value_enum, default_value_t = OutputFormat::Json)]
     output: OutputFormat,
+    /// Run a best-effort CLI update check before ordinary commands.
+    #[arg(long, env = "DCC_MCP_CLI_AUTO_UPDATE", default_value_t = false)]
+    auto_update: bool,
     #[command(subcommand)]
     command: Command,
 }
@@ -270,10 +274,16 @@ enum Command {
     },
     /// Validate local SKILL.md packages before loading them at runtime.
     Lint(LintArgs),
-    /// Check for and apply gateway-controlled binary updates.
+    /// Check for and apply CLI or gateway binary updates.
     Update {
         #[command(subcommand)]
-        action: UpdateAction,
+        action: Option<UpdateAction>,
+    },
+    /// Forward arguments to the independently released dcc-cua runtime.
+    Cua {
+        /// Arguments passed unchanged to dcc-cua. Use `--` before flags.
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        args: Vec<OsString>,
     },
     /// Gateway lifecycle management.
     Gateway {
@@ -561,15 +571,22 @@ struct LintArgs {
 enum UpdateAction {
     /// Check whether a newer version is available.
     Check {
-        /// Binary name to check in the gateway update manifest.
+        /// Binary name to check. CLI names use the official CLI release manifest.
         #[arg(long)]
         binary: Option<String>,
         /// Current version to compare against. Defaults to this CLI version.
         #[arg(long)]
         current_version: Option<String>,
     },
-    /// Download the latest CLI version and stage it for the next launch.
-    Apply,
+    /// Download the selected binary and stage it for the next launch.
+    Apply {
+        /// Binary name. Defaults to the currently running CLI.
+        #[arg(long)]
+        binary: Option<String>,
+        /// Current version to compare against. Defaults to this CLI version.
+        #[arg(long)]
+        current_version: Option<String>,
+    },
 }
 
 #[derive(Debug, Clone, clap::Args)]
@@ -704,8 +721,17 @@ async fn run_with_args(args: Args) -> anyhow::Result<()> {
         auto_gateway_bin,
         auto_gateway_timeout_secs,
         output,
+        auto_update,
         command,
     } = args;
+
+    if let Command::Cua { args } = &command {
+        let exit_code = crate::application::cua::run(args)?;
+        if exit_code != 0 {
+            std::process::exit(exit_code);
+        }
+        return Ok(());
+    }
 
     let profile_path = gateway_profile::default_profile_path();
     let profile_store = gateway_profile::GatewayProfileStore::load(&profile_path)?;
@@ -717,6 +743,17 @@ async fn run_with_args(args: Args) -> anyhow::Result<()> {
         endpoint.clone(),
         gateway_ensure::default_registry_dir(),
     );
+
+    if auto_update && !matches!(&command, Command::Update { .. }) {
+        let service = crate::application::update::UpdateService::for_binary(
+            &base_url,
+            runtime_cli_name(),
+            env!("CARGO_PKG_VERSION"),
+        );
+        if let Err(error) = service.auto_update().await {
+            eprintln!("warning: automatic CLI update skipped: {error}");
+        }
+    }
 
     if !no_auto_gateway {
         ensure_gateway_for_command(
@@ -1041,7 +1078,10 @@ async fn run_with_args(args: Args) -> anyhow::Result<()> {
             failed = result.failed;
             result.value
         }
-        Command::Update { action } => match action {
+        Command::Update { action } => match action.unwrap_or(UpdateAction::Apply {
+            binary: None,
+            current_version: None,
+        }) {
             UpdateAction::Check {
                 binary,
                 current_version,
@@ -1049,24 +1089,30 @@ async fn run_with_args(args: Args) -> anyhow::Result<()> {
                 let binary_name = binary.unwrap_or_else(|| runtime_cli_name().to_string());
                 let current_version =
                     current_version.unwrap_or_else(|| env!("CARGO_PKG_VERSION").to_string());
-                let service = crate::application::update::UpdateService::new(
+                let service = crate::application::update::UpdateService::for_binary(
                     &base_url,
                     &binary_name,
                     &current_version,
                 );
-                let value = service.check_update().await?;
+                let value = service.check().await?;
                 if value.get("error").is_some() {
                     failed = true;
                 }
                 to_json(value)?
             }
-            UpdateAction::Apply => {
-                let service = crate::application::update::UpdateService::new(
+            UpdateAction::Apply {
+                binary,
+                current_version,
+            } => {
+                let binary_name = binary.unwrap_or_else(|| runtime_cli_name().to_string());
+                let current_version =
+                    current_version.unwrap_or_else(|| env!("CARGO_PKG_VERSION").to_string());
+                let service = crate::application::update::UpdateService::for_binary(
                     &base_url,
-                    runtime_cli_name(),
-                    env!("CARGO_PKG_VERSION"),
+                    &binary_name,
+                    &current_version,
                 );
-                to_json(service.apply_update().await?)?
+                to_json(service.apply().await?)?
             }
         },
         Command::Gateway { action, daemon } => {
@@ -1082,6 +1128,7 @@ async fn run_with_args(args: Args) -> anyhow::Result<()> {
             }
         }
         Command::Mcp { action } => run_mcp_cmd(action, &base_url).await?,
+        Command::Cua { .. } => unreachable!("CUA command is handled before gateway setup"),
     };
 
     print_value(&value, output)?;
@@ -1314,9 +1361,11 @@ fn gateway_endpoint_for_command(
     match command {
         Command::Smoke { url: None, .. } => Some(Endpoint::new(base_url)),
         Command::Smoke { url: Some(_), .. } => None,
-        Command::Health | Command::Stats { .. } | Command::Update { .. } => {
+        Command::Health | Command::Stats { .. } => Some(Endpoint::new(base_url)),
+        Command::Update { action } if update_action_requires_gateway(action) => {
             Some(Endpoint::new(base_url))
         }
+        Command::Update { .. } => None,
         Command::Doctor { .. } | Command::DccTypes { .. } | Command::Discover { .. } => None,
         Command::List
         | Command::Search { .. }
@@ -1338,8 +1387,19 @@ fn gateway_endpoint_for_command(
         Command::Install { .. }
         | Command::Marketplace { .. }
         | Command::Lint(_)
+        | Command::Cua { .. }
         | Command::Gateway { .. } => None,
     }
+}
+
+fn update_action_requires_gateway(action: &Option<UpdateAction>) -> bool {
+    let binary = match action {
+        Some(UpdateAction::Check { binary, .. }) | Some(UpdateAction::Apply { binary, .. }) => {
+            binary.as_deref()
+        }
+        None => None,
+    };
+    binary.is_some_and(|name| !matches!(name, "dccmcp" | "dcc-mcp-cli"))
 }
 
 fn mcp_action_url(action: &McpAction) -> Option<&str> {

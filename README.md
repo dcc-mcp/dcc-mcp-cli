@@ -9,30 +9,55 @@ gateway, transport, marketplace, and skill APIs remain in
 [`dcc-mcp-core`](https://github.com/dcc-mcp/dcc-mcp-core) and are consumed as
 versioned Git dependencies.
 
-## Version 0.21.0
+## Breaking change in 0.21.0
 
-Version 0.21.0 is the first standalone CLI release and marks a breaking
-product boundary.
+Version 0.21.0 moved the command-line control plane into this dedicated
+repository. This is a breaking product boundary for installations that used
+the CLI shipped from `dcc-mcp-core`.
 
 - `dccmcp` is the primary executable name.
 - `dcc-mcp-cli` remains as a compatibility binary for existing automation.
-- The reusable MCP Streamable HTTP client is supplied by `dcc-mcp-client` in
-  dcc-mcp-core.
-- New integrations should depend on this repository for the CLI and on core
-  for shared runtime libraries.
+- New installations must use the installer and release assets from this
+  repository.
+- Core remains the source for shared runtime libraries, gateway/server
+  contracts, and the `dcc-mcp-server` runtime.
+- `dcc-cua` remains an independent runtime. The CLI forwards to it through
+  `dccmcp cua --` and does not embed its SDK or host lifecycle.
+
+Existing scripts can keep invoking `dcc-mcp-cli`. Update their installation
+source to `https://github.com/dcc-mcp/dcc-mcp-cli` before removing the old Core
+CLI package.
+
+## Version 0.21.1
+
+This release completes the post-boundary CLI maintenance flow.
+
+- `dccmcp update` performs the normal CLI self-update. It checks the official
+  release manifest, verifies SHA-256, and stages the next launch.
+- `dccmcp --auto-update ...` enables the best-effort update before an ordinary
+  command.
+- `dccmcp cua -- ...` forwards arguments to the independently released
+  `dcc-cua` runtime without embedding its SDK or host lifecycle.
+
+The `dcc-mcp-cli` executable remains a compatibility alias. The DCC-CUA
+runtime keeps its own version line and release process.
 
 ## Install
 
 Linux and macOS
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dcc-mcp/dcc-mcp-cli/main/scripts/install-cli.sh | sh
+curl -fL https://raw.githubusercontent.com/dcc-mcp/dcc-mcp-cli/main/scripts/install-cli.sh -o install-cli.sh
+cat install-cli.sh
+sh ./install-cli.sh
 ```
 
 Windows PowerShell
 
 ```powershell
-irm https://raw.githubusercontent.com/dcc-mcp/dcc-mcp-cli/main/scripts/install-cli.ps1 | iex
+Invoke-WebRequest https://raw.githubusercontent.com/dcc-mcp/dcc-mcp-cli/main/scripts/install-cli.ps1 -OutFile .\install-cli.ps1
+Get-Content -Raw .\install-cli.ps1
+& .\install-cli.ps1
 ```
 
 The installer places `dccmcp` on `PATH` and creates the `dcc-mcp-cli`
@@ -76,10 +101,24 @@ names. Before the first observation or input action, the host must report
 The same route and binding contract applies to an explicit DCC-CUA request for
 a browser or another non-DCC application.
 
-The CLI and DCC-CUA host are versioned release artifacts. On Windows, the
-DCC-MCP server bundle carries the native UI Control host beside the server and
-adapter runtime. Keep the CLI update flow and host bundle deployment aligned
-with the release manifest used by the target environment.
+Use `dccmcp cua -- manifest` or `dccmcp cua -- ping` when the standalone CUA
+runtime is installed. If it is missing, install the official `dcc-cua` release
+separately or set `DCC_MCP_CUA_BINARY` to its absolute path. The CLI does not
+download or embed the CUA runtime as part of its self-update.
+
+The CLI does not embed the CUA SDK. Use the thin forwarding command when a
+shell workflow needs the standalone runtime:
+
+```bash
+dccmcp cua -- manifest
+dccmcp cua -- host-ensure
+```
+
+The `dcc-cua` runtime owns its long-lived Host process, permissions, sessions,
+and UI safety boundary. It is released and updated independently. The CLI
+resolves it from `DCC_MCP_CUA_BINARY`, beside the current CLI, the standard
+installation directories, versioned installs, and then `PATH`. The structured
+`ui-control` command remains the DCC-MCP route for scoped DCC calls.
 
 ## MCP calls
 
@@ -109,6 +148,6 @@ Windows artifact with `x86_64-pc-windows-msvc` and does not use the GNU target.
 
 This repository owns the CLI application, command UX, release artifacts,
 installer scripts, and CLI-specific tests. Core owns the reusable MCP client
-and DCC runtime contracts. The CLI pins the core dependency branch during the
-0.21.0 transition and will move to the `v0.21.0` core tag when that release
-lands.
+and DCC runtime contracts. The CLI consumes the published `dcc-mcp-core`
+contracts through versioned Git dependencies. `dcc-cua` remains an independent
+runtime and release boundary.
