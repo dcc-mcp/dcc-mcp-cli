@@ -264,6 +264,19 @@ def test_first_manifest_workflow_is_reusable_and_version_serialized() -> None:
     assert update_job["concurrency"]["group"] == "winget-${{ github.repository }}-${{ inputs.tag || github.ref_name }}"
 
 
+def test_release_winget_state_check_exports_the_pat_for_gh_cli() -> None:
+    """The onboarding probe must authenticate the GitHub CLI with the PAT."""
+    yaml = pytest.importorskip("yaml")
+    release_workflow = yaml.safe_load(RELEASE_WORKFLOW.read_text(encoding="utf-8"))
+    step = next(
+        step
+        for step in release_workflow["jobs"]["check-winget-onboarding"]["steps"]
+        if step.get("name") == "Check WinGet token"
+    )
+
+    assert step["env"]["GH_TOKEN"] == "${{ secrets.WINGET_TOKEN }}"
+
+
 def test_update_workflow_fails_closed_on_an_open_pull_request() -> None:
     """A retry must surface an existing PR instead of opening a second one."""
     yaml = pytest.importorskip("yaml")

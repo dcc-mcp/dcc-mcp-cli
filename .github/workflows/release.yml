@@ -168,6 +168,7 @@ jobs:
         id: state
         shell: bash
         env:
+          GH_TOKEN: ${{ secrets.WINGET_TOKEN }}
           WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
           WINGET_IDENTIFIER: DccMcp.DccMcpCli
         run: |
