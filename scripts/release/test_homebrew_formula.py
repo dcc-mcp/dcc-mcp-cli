@@ -7,7 +7,7 @@ import unittest
 from generate_homebrew_formula import render_formula
 
 
-VERSION = "0.21.2"
+VERSION = "0.21.3"
 URL = f"https://github.com/dcc-mcp/dcc-mcp-cli/releases/download/v{VERSION}/dccmcp-macos-universal2"
 SHA256 = "A" * 64
 

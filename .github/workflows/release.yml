@@ -50,6 +50,19 @@ jobs:
         with:
           python-version: '3.11'
       - uses: dtolnay/rust-toolchain@1961bfc0c4a8bf07e0a0c98e1e2459c642ea70a0 # 1.95.0
+      - name: Validate release identity
+        env:
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${RELEASE_TAG#v}"
+          cargo_version="$(cargo metadata --no-deps --format-version 1 | python -c 'import json,sys; print(json.load(sys.stdin)["packages"][0]["version"])')"
+          if [ "$cargo_version" != "$version" ]; then
+            echo "::error::release tag $RELEASE_TAG does not match Cargo package version $cargo_version"
+            exit 1
+          fi
+          echo "release identity validated: $RELEASE_TAG"
       - name: Pin Windows build to MSVC
         if: runner.os == 'Windows'
         shell: pwsh
@@ -93,6 +106,39 @@ jobs:
           python scripts/release/build_cli_bundle.py --version "$version" --platform "${{ matrix.platform }}" --cli-bin "dcc-mcp-cli-${{ matrix.platform }}${{ matrix.executable_suffix }}" --name-prefix dcc-mcp-cli --out-dir .
           python scripts/release/generate_update_manifest.py --version "$version" --platform "${{ matrix.platform }}" --release-tag "$RELEASE_TAG" --dccmcp-bin "dccmcp-${{ matrix.platform }}${{ matrix.executable_suffix }}" --compatibility-bin "dcc-mcp-cli-${{ matrix.platform }}${{ matrix.executable_suffix }}" --out-dir .
           python scripts/release/generate_asset_checksums.py --output "dcc-mcp-cli-release-checksums-${{ matrix.platform }}.txt" --asset "dccmcp-${{ matrix.platform }}${{ matrix.executable_suffix }}" --asset "dcc-mcp-cli-${{ matrix.platform }}${{ matrix.executable_suffix }}" --asset "dccmcp-${version}-${{ matrix.platform }}.zip" --asset "dcc-mcp-cli-${version}-${{ matrix.platform }}.zip" --asset "dcc-mcp-update-manifest-${{ matrix.platform }}.json"
+      - name: Validate Windows WinGet archive
+        if: runner.os == 'Windows'
+        env:
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $Version = $env:RELEASE_TAG -replace '^v', ''
+          $Archive = Join-Path $PWD "dccmcp-$Version-windows-x86_64.zip"
+          if (-not (Test-Path -LiteralPath $Archive)) {
+            Write-Output "::error::WinGet archive was not created: $Archive"
+            exit 1
+          }
+
+          $Extract = Join-Path $env:RUNNER_TEMP "winget-archive-$Version"
+          Remove-Item -LiteralPath $Extract -Recurse -Force -ErrorAction SilentlyContinue
+          Expand-Archive -LiteralPath $Archive -DestinationPath $Extract
+          $Files = @(Get-ChildItem -LiteralPath $Extract -Recurse -File)
+          if ($Files.Count -ne 1 -or $Files[0].Name -ne 'dccmcp.exe' -or $Files[0].DirectoryName -ne $Extract) {
+            $Names = $Files | ForEach-Object { $_.FullName }
+            Write-Output "::error::WinGet archive must contain only root dccmcp.exe"
+            $Names | ForEach-Object { Write-Output $_ }
+            exit 1
+          }
+
+          $Output = (& $Files[0].FullName --version 2>&1 | Out-String)
+          $Code = $LASTEXITCODE
+          Write-Output $Output
+          if ($Code -ne 0 -or [string]::IsNullOrWhiteSpace($Output) -or $Output -notmatch [regex]::Escape($Version)) {
+            Write-Output "::error::dccmcp.exe --version failed or reported the wrong release"
+            exit 1
+          }
+          Write-Output "WinGet archive validated: $Archive"
       - name: Upload release assets
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
@@ -109,75 +155,101 @@ jobs:
   # WinGet and Homebrew consume the standalone CLI release. Core owns the
   # gateway/server runtime and does not publish package-manager entries for the
   # CLI after the 0.21.0 repository split.
-  publish-winget:
-    name: Publish WinGet update
+  check-winget-onboarding:
+    name: Check WinGet package state
     needs: build
     if: startsWith(github.ref, 'refs/tags/v') || inputs.tag != ''
     runs-on: windows-latest
-    permissions:
-      contents: read
-    env:
-      WINGET_IDENTIFIER: DccMcp.DccMcpCli
-      RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+    outputs:
+      skip: ${{ steps.state.outputs.skip }}
+      onboarded: ${{ steps.state.outputs.onboarded }}
     steps:
       - name: Check WinGet token
-        id: check_token
+        id: state
         shell: bash
         env:
           WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
+          WINGET_IDENTIFIER: DccMcp.DccMcpCli
         run: |
           if [ -z "$WINGET_TOKEN" ]; then
             echo "::warning::WINGET_TOKEN is not configured; skipping WinGet publication"
             echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "onboarded=false" >> "$GITHUB_OUTPUT"
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
+            # A cross-organisation token that cannot read winget-pkgs also
+            # returns 404. Probe a known package before trusting the target 404.
+            control="manifests/m/Microsoft/PowerToys"
+            control_status=0
+            gh api "repos/microsoft/winget-pkgs/contents/$control" >/dev/null 2>control.err || control_status=$?
+            if [ "$control_status" -ne 0 ]; then
+              cat control.err
+              echo "::error::cannot read winget-pkgs with the configured token"
+              exit 1
+            fi
+
+            path="manifests/d/DccMcp/DccMcpCli"
+            package_status=0
+            gh api "repos/microsoft/winget-pkgs/contents/$path" >/dev/null 2>winget-api.err || package_status=$?
+            if [ "$package_status" -eq 0 ]; then
+              echo "onboarded=true" >> "$GITHUB_OUTPUT"
+            elif grep -q 'HTTP 404' winget-api.err; then
+              echo "onboarded=false" >> "$GITHUB_OUTPUT"
+            else
+              cat winget-api.err
+              echo "::error::could not determine WinGet onboarding state"
+              exit 1
+            fi
           fi
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-        if: steps.check_token.outputs.skip != 'true'
-        with:
-          ref: ${{ inputs.tag || github.ref_name }}
-          persist-credentials: false
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
-        if: steps.check_token.outputs.skip != 'true'
-        with:
-          python-version: "3.11"
-      - name: Read the release
-        if: steps.check_token.outputs.skip != 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json tagName,publishedAt,assets > release.json
+
+  publish-winget-first:
+    name: Publish first WinGet manifest
+    needs: [build, check-winget-onboarding]
+    if: needs.check-winget-onboarding.outputs.skip != 'true' && needs.check-winget-onboarding.outputs.onboarded == 'false'
+    uses: ./.github/workflows/winget-first-manifest.yml
+    with:
+      release_tag: ${{ inputs.tag || github.ref_name }}
+      dry_run: false
+    secrets: inherit
+
+  publish-winget:
+    name: Publish WinGet update
+    needs: [build, check-winget-onboarding]
+    if: needs.check-winget-onboarding.outputs.skip != 'true' && needs.check-winget-onboarding.outputs.onboarded == 'true'
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    concurrency:
+      group: winget-${{ github.repository }}-${{ inputs.tag || github.ref_name }}
+      cancel-in-progress: false
+    env:
+      WINGET_IDENTIFIER: DccMcp.DccMcpCli
+      RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+    steps:
       - name: Derive the release version
-        if: steps.check_token.outputs.skip != 'true'
         id: version
         shell: bash
         run: echo "version=${RELEASE_TAG#v}" >> "$GITHUB_OUTPUT"
-      - name: Check WinGet package onboarding
-        if: steps.check_token.outputs.skip != 'true'
-        id: onboarding
+      - name: Refuse to duplicate an open WinGet pull request
+        id: existing_pr
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.WINGET_TOKEN }}
         run: |
           set -euo pipefail
-          path="manifests/d/DccMcp/DccMcpCli"
-          status=0
-          gh api "repos/microsoft/winget-pkgs/contents/$path" >/dev/null 2>winget-api.err || status=$?
-          if [ "$status" -eq 0 ]; then
-            echo "onboarded=true" >> "$GITHUB_OUTPUT"
-          elif grep -q 'HTTP 404' winget-api.err; then
-            echo "onboarded=false" >> "$GITHUB_OUTPUT"
-          else
-            cat winget-api.err
-            echo "::error::could not determine WinGet onboarding state"
+          version="${RELEASE_TAG#v}"
+          query="repo:microsoft/winget-pkgs is:pr is:open \"${WINGET_IDENTIFIER}\" \"${version}\""
+          existing="$(gh api search/issues --method GET \
+            --field q="$query" \
+            --field per_page=100 \
+            --jq '.items[] | [.number, .html_url, .title] | @tsv')"
+          if [ -n "$existing" ]; then
+            echo "::error::An open WinGet pull request already exists for $WINGET_IDENTIFIER. Refusing a duplicate update."
+            echo "$existing"
+            echo "::error::Resolve or close the existing pull request before retrying this release."
             exit 1
           fi
-      - name: Report pending WinGet onboarding
-        if: steps.check_token.outputs.skip != 'true' && steps.onboarding.outputs.onboarded == 'false'
-        shell: bash
-        run: echo "::warning::${WINGET_IDENTIFIER} is not onboarded in microsoft/winget-pkgs; run winget-first-manifest.yml once before release updates."
       - name: Publish to WinGet
-        if: steps.check_token.outputs.skip != 'true' && steps.onboarding.outputs.onboarded == 'true'
         uses: dcc-mcp/winget-releaser@d1b420769e4f42cdaf1990aee944be5076a524ca
         with:
           identifier: ${{ env.WINGET_IDENTIFIER }}

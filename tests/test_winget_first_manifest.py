@@ -12,6 +12,7 @@ from scripts.ci.winget_first_manifest import WingetManifestError
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = REPO_ROOT / ".github" / "workflows" / "winget-first-manifest.yml"
+RELEASE_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "release.yml"
 
 VERSION = "0.21.1"
 SHA256 = "A" * 64
@@ -242,6 +243,43 @@ def test_the_existence_guard_probes_a_control_path_before_trusting_a_404() -> No
     assert "cannot read winget-pkgs" in body, "an unreadable control must abort the run"
     # The control has to be checked before the package path is trusted.
     assert body.index("control_status=$?") < body.index("gh_status=$?")
+
+
+def test_first_manifest_workflow_is_reusable_and_version_serialized() -> None:
+    """The release workflow and manual recovery path must share one lock."""
+    yaml = pytest.importorskip("yaml")
+
+    workflow = yaml.safe_load(WORKFLOW.read_text(encoding="utf-8"))
+    release_workflow = yaml.safe_load(RELEASE_WORKFLOW.read_text(encoding="utf-8"))
+
+    # PyYAML 1.1 parses the YAML 1.2 `on` key as True.
+    triggers = workflow.get("on", workflow.get(True, {}))
+    assert "workflow_call" in triggers
+    assert "winget-${{ github.repository }}-${{ inputs.release_tag || github.ref_name }}" in workflow["concurrency"]["group"]
+
+    first_job = release_workflow["jobs"]["publish-winget-first"]
+    update_job = release_workflow["jobs"]["publish-winget"]
+    assert first_job["uses"] == "./.github/workflows/winget-first-manifest.yml"
+    assert first_job["with"]["dry_run"] is False
+    assert update_job["concurrency"]["group"] == "winget-${{ github.repository }}-${{ inputs.tag || github.ref_name }}"
+
+
+def test_update_workflow_fails_closed_on_an_open_pull_request() -> None:
+    """A retry must surface an existing PR instead of opening a second one."""
+    yaml = pytest.importorskip("yaml")
+
+    workflow = yaml.safe_load(RELEASE_WORKFLOW.read_text(encoding="utf-8"))
+    step = next(
+        step
+        for step in workflow["jobs"]["publish-winget"]["steps"]
+        if step.get("name") == "Refuse to duplicate an open WinGet pull request"
+    )
+    body = step["run"]
+
+    assert "gh api search/issues" in body
+    assert "is:pr is:open" in body
+    assert "Refusing a duplicate update" in body
+    assert "exit 1" in body
 
 
 def test_write_manifests_creates_the_winget_pkgs_layout(tmp_path) -> None:

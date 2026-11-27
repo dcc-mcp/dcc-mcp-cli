@@ -10,7 +10,7 @@ usage() {
 Install DCCMCP from the official GitHub release manifest.
 
 Usage:
-  install-cli.sh [--version v0.21.2] [--install-dir ~/.local/bin]
+  install-cli.sh [--version v0.21.3] [--install-dir ~/.local/bin]
 
 Environment:
   DCC_MCP_VERSION      Release version, default latest

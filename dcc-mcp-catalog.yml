@@ -28,8 +28,8 @@ entries:
     dcc: ["maya"]
     url: "https://github.com/dcc-mcp/dcc-mcp-maya"
     tags: ["adapter", "maya", "official", "pip", "core"]
-    version: "0.9.15"
-    min_core_version: "0.19.45"
+    version: "0.9.42"
+    min_core_version: "0.20.0"
     maintainer: "dcc-mcp"
     install:
       type: pip
@@ -41,7 +41,7 @@ entries:
     dcc: ["blender"]
     url: "https://github.com/dcc-mcp/dcc-mcp-blender"
     tags: ["adapter", "blender", "official", "pip", "addon", "core"]
-    version: "0.1.36"
+    version: "0.1.43"
     min_core_version: "0.19.45"
     maintainer: "dcc-mcp"
     install:
@@ -54,7 +54,7 @@ entries:
     dcc: ["houdini"]
     url: "https://github.com/dcc-mcp/dcc-mcp-houdini"
     tags: ["adapter", "houdini", "official", "pip", "core"]
-    version: "0.22.0"
+    version: "0.31.5"
     min_core_version: "0.19.45"
     maintainer: "dcc-mcp"
     install:
@@ -68,7 +68,7 @@ entries:
     dcc: ["3dsmax", "3ds max", "3ds-max", "max"]
     url: "https://github.com/dcc-mcp/dcc-mcp-3dsmax"
     tags: ["adapter", "3dsmax", "3ds-max", "official", "pip", "core"]
-    version: "0.1.37"
+    version: "0.1.40"
     min_core_version: "0.19.45"
     maintainer: "dcc-mcp"
     install:
@@ -81,8 +81,8 @@ entries:
     dcc: ["photoshop"]
     url: "https://github.com/dcc-mcp/dcc-mcp-photoshop"
     tags: ["adapter", "photoshop", "official", "pip", "uxp", "core", "setup"]
-    version: "0.1.37"
-    min_core_version: "0.19.45"
+    version: "0.1.44"
+    min_core_version: "0.20.14"
     maintainer: "dcc-mcp"
     install:
       type: pip
@@ -108,7 +108,7 @@ entries:
     dcc: ["unreal"]
     url: "https://github.com/dcc-mcp/dcc-mcp-unreal"
     tags: ["adapter", "unreal", "official", "pip", "game-engine"]
-    version: "0.2.0"
+    version: "0.3.0"
     min_core_version: "0.19.45"
     maintainer: "dcc-mcp"
     install:
@@ -121,8 +121,8 @@ entries:
     dcc: ["zbrush"]
     url: "https://github.com/dcc-mcp/dcc-mcp-zbrush"
     tags: ["adapter", "zbrush", "official", "pip", "sculpting"]
-    version: "0.2.18"
-    min_core_version: "0.19.45"
+    version: "0.2.26"
+    min_core_version: "0.20.14"
     maintainer: "dcc-mcp"
     install:
       type: pip
@@ -134,8 +134,8 @@ entries:
     dcc: ["premiere"]
     url: "https://github.com/dcc-mcp/dcc-mcp-premiere"
     tags: ["adapter", "premiere", "official", "pip", "editing"]
-    version: "0.4.0"
-    min_core_version: "0.19.45"
+    version: "0.6.3"
+    min_core_version: "0.20.34"
     maintainer: "dcc-mcp"
     install:
       type: pip
@@ -147,8 +147,8 @@ entries:
     dcc: ["aftereffects"]
     url: "https://github.com/dcc-mcp/dcc-mcp-aftereffects"
     tags: ["adapter", "aftereffects", "official", "pip", "motion-graphics"]
-    version: "0.5.0"
-    min_core_version: "0.19.45"
+    version: "0.7.3"
+    min_core_version: "0.20.14"
     maintainer: "dcc-mcp"
     install:
       type: pip
@@ -160,7 +160,7 @@ entries:
     dcc: ["katana"]
     url: "https://github.com/dcc-mcp/dcc-mcp-katana"
     tags: ["adapter", "katana", "official", "pip", "lookdev"]
-    version: "0.3.0"
+    version: "0.5.0"
     min_core_version: "0.19.45"
     maintainer: "dcc-mcp"
     install:
@@ -173,7 +173,7 @@ entries:
     dcc: ["mobu"]
     url: "https://github.com/dcc-mcp/dcc-mcp-mobu"
     tags: ["adapter", "mobu", "motionbuilder", "official", "pip", "animation"]
-    version: "0.3.0"
+    version: "0.4.0"
     min_core_version: "0.19.45"
     maintainer: "dcc-mcp"
     install:
@@ -212,8 +212,8 @@ entries:
     dcc: ["substance3d_painter"]
     url: "https://github.com/dcc-mcp/dcc-mcp-substance3d-painter"
     tags: ["adapter", "substance3d_painter", "official", "pip", "texturing"]
-    version: "0.1.3"
-    min_core_version: "0.19.3"
+    version: "0.4.1"
+    min_core_version: "0.20.15"
     maintainer: "dcc-mcp"
     install:
       type: pip
@@ -225,8 +225,8 @@ entries:
     dcc: ["godot"]
     url: "https://github.com/dcc-mcp/dcc-mcp-godot"
     tags: ["adapter", "godot", "official", "pip", "game-engine"]
-    version: "0.4.0"
-    min_core_version: "0.19.45"
+    version: "0.9.6"
+    min_core_version: "0.20.41"
     maintainer: "dcc-mcp"
     install:
       type: pip
@@ -238,7 +238,7 @@ entries:
     dcc: ["shotgrid"]
     url: "https://github.com/dcc-mcp/dcc-mcp-fpt"
     tags: ["adapter", "shotgrid", "fpt", "official", "pip", "production-tracking"]
-    version: "0.1.8"
+    version: "0.1.9"
     min_core_version: "0.19.45"
     maintainer: "dcc-mcp"
     install:
@@ -251,7 +251,7 @@ entries:
     dcc: ["openusd"]
     url: "https://github.com/dcc-mcp/dcc-mcp-openusd"
     tags: ["adapter", "openusd", "usd", "official", "pip", "interchange"]
-    version: "0.8.1"
+    version: "0.8.2"
     min_core_version: "0.19.45"
     maintainer: "dcc-mcp"
     install:

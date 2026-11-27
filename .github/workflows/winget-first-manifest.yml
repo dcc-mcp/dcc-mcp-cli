@@ -1,23 +1,24 @@
 name: WinGet First Manifest
 
-# The first version of a package has to be submitted by hand: Komac's `new`
-# command prompts for the nested files of a zip installer even under --dry-run,
-# and vedantmgoyal9/winget-releaser refuses to run until the package already
-# exists in microsoft/winget-pkgs. So this workflow renders the three manifests
-# from a published release, validates them, and submits them once.
+# The first version needs a dedicated renderer: Komac's `new` command prompts
+# for the nested files of a zip installer even under --dry-run, and
+# vedantmgoyal9/winget-releaser refuses to run until the package already exists
+# in microsoft/winget-pkgs. This workflow renders the three manifests from a
+# published release, validates them, and submits them once.
 #
 # Every later version is handled by the `publish-winget` job in release.yml.
 # That is why this workflow is first-version only: it refuses to run if the
 # package is already in winget-pkgs or already has an open pull request, so it
 # cannot race the release pipeline or open a duplicate PR.
 #
-# Run it from the CLI repository's Actions tab once the release you want to publish exists:
-#   release_tag = v0.21.2 (or newer), dry_run = true, then dry_run = false.
+# Release calls this workflow automatically when the package is not onboarded.
+# It remains available from the CLI repository's Actions tab for recovery:
+#   release_tag = v0.21.3 (or newer), dry_run = true, then dry_run = false.
 on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: "Release tag to publish, for example v0.21.2"
+        description: "Release tag to publish, for example v0.21.3"
         required: true
         type: string
       dry_run:
@@ -26,8 +27,23 @@ on:
         type: boolean
         default: true
 
+  workflow_call:
+    inputs:
+      release_tag:
+        description: "Release tag to publish, for example v0.21.3"
+        required: true
+        type: string
+      dry_run:
+        description: "Render and validate only, without opening a pull request"
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      WINGET_TOKEN:
+        required: true
+
 concurrency:
-  group: winget-first-manifest
+  group: winget-${{ github.repository }}-${{ inputs.release_tag || github.ref_name }}
   cancel-in-progress: false
 
 permissions:
@@ -45,8 +61,10 @@ jobs:
       - name: Check WinGet token
         id: check_token
         shell: bash
+        env:
+          WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
         run: |
-          if [ -z "${{ secrets.WINGET_TOKEN }}" ]; then
+          if [ -z "$WINGET_TOKEN" ]; then
             echo "::error::WINGET_TOKEN is not configured; cannot open a winget-pkgs pull request"
             exit 1
           fi
@@ -146,7 +164,7 @@ jobs:
         run: |
           set -euo pipefail
           version="${RELEASE_TAG#v}"
-          query="repo:microsoft/winget-pkgs is:pr is:open \"${PACKAGE_IDENTIFIER}\" \"${version}\""
+          query="repo:microsoft/winget-pkgs is:pr is:open \"${PACKAGE_IDENTIFIER}\""
           existing="$(gh api search/issues --method GET \
             --field q="$query" \
             --field per_page=100 \

@@ -42,6 +42,13 @@ This release completes the post-boundary CLI maintenance flow.
 The `dcc-mcp-cli` executable remains a compatibility alias. The DCC-CUA
 runtime keeps its own version line and release process.
 
+## Version 0.21.3
+
+This release aligns the bundled adapter catalog with Core `0.22.0` and keeps
+CLI product discovery and installation plans on the same released versions.
+The release validation also exercises the catalog-backed install plan for each
+first-party adapter.
+
 ## Install
 
 Linux and macOS
@@ -162,13 +169,15 @@ the following repository secrets for the two cross-repository jobs:
   `loonghao/winget-pkgs` fork, and open the update pull request.
 - `HOMEBREW_TAP_TOKEN` with permission to push `dcc-mcp/homebrew-tap`.
 
-Run `winget-first-manifest.yml` once for the initial `DccMcp.DccMcpCli`
-submission. Later tags use the `publish-winget` job in `release.yml`. Every
-later tag also regenerates `Formula/dccmcp.rb` in the Homebrew tap from the
+Each tagged release automatically checks whether `DccMcp.DccMcpCli` is already
+onboarded. The first release uses the three-file manifest renderer in
+`winget-first-manifest.yml`, and later tags use the `publish-winget` update job
+in `release.yml`. Every tag also regenerates `Formula/dccmcp.rb` in the Homebrew tap from the
 published macOS universal2 binary. Missing package-manager credentials skip
 the corresponding job with a warning and do not invalidate the CLI release.
-The first-manifest workflow also stops when the package or an open version
-pull request already exists, which prevents duplicate WinGet submissions.
+The first-manifest workflow remains manually dispatchable for recovery and
+stops when the package or an open pull request already exists, which prevents
+duplicate WinGet submissions.
 
 ## Repository boundary
 
