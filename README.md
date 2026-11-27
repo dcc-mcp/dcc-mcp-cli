@@ -167,6 +167,8 @@ submission. Later tags use the `publish-winget` job in `release.yml`. Every
 later tag also regenerates `Formula/dccmcp.rb` in the Homebrew tap from the
 published macOS universal2 binary. Missing package-manager credentials skip
 the corresponding job with a warning and do not invalidate the CLI release.
+The first-manifest workflow also stops when the package or an open version
+pull request already exists, which prevents duplicate WinGet submissions.
 
 ## Repository boundary
 
