@@ -177,7 +177,6 @@ jobs:
             echo "skip=true" >> "$GITHUB_OUTPUT"
             echo "onboarded=false" >> "$GITHUB_OUTPUT"
           else
-            echo "skip=false" >> "$GITHUB_OUTPUT"
             # A cross-organisation token that cannot read winget-pkgs also
             # returns 404. Probe a known package before trusting the target 404.
             control="manifests/m/Microsoft/PowerToys"
@@ -193,8 +192,26 @@ jobs:
             package_status=0
             gh api "repos/microsoft/winget-pkgs/contents/$path" >/dev/null 2>winget-api.err || package_status=$?
             if [ "$package_status" -eq 0 ]; then
+              echo "skip=false" >> "$GITHUB_OUTPUT"
               echo "onboarded=true" >> "$GITHUB_OUTPUT"
             elif grep -q 'HTTP 404' winget-api.err; then
+              query="repo:microsoft/winget-pkgs is:pr is:open \"${WINGET_IDENTIFIER}\""
+              existing_status=0
+              existing="$(gh api search/issues --method GET \
+                --field q="$query" \
+                --field per_page=100 \
+                --jq '.items[] | [.number, .html_url, .title] | @tsv')" || existing_status=$?
+              if [ "$existing_status" -ne 0 ]; then
+                echo "::error::could not determine whether a WinGet pull request is already open"
+                exit 1
+              fi
+              if [ -n "$existing" ]; then
+                echo "::warning::an open WinGet pull request already exists; skipping this release's WinGet submission"
+                echo "$existing"
+                echo "skip=true" >> "$GITHUB_OUTPUT"
+              else
+                echo "skip=false" >> "$GITHUB_OUTPUT"
+              fi
               echo "onboarded=false" >> "$GITHUB_OUTPUT"
             else
               cat winget-api.err

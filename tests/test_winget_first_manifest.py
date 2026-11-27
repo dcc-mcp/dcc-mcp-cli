@@ -277,6 +277,22 @@ def test_release_winget_state_check_exports_the_pat_for_gh_cli() -> None:
     assert step["env"]["GH_TOKEN"] == "${{ secrets.WINGET_TOKEN }}"
 
 
+def test_release_winget_state_check_skips_when_first_manifest_pr_is_open() -> None:
+    """An external first-manifest review must not fail the binary release."""
+    yaml = pytest.importorskip("yaml")
+    release_workflow = yaml.safe_load(RELEASE_WORKFLOW.read_text(encoding="utf-8"))
+    step = next(
+        step
+        for step in release_workflow["jobs"]["check-winget-onboarding"]["steps"]
+        if step.get("name") == "Check WinGet token"
+    )
+    body = step["run"]
+
+    assert "repo:microsoft/winget-pkgs is:pr is:open" in body
+    assert "an open WinGet pull request already exists" in body
+    assert 'echo "skip=true"' in body
+
+
 def test_update_workflow_fails_closed_on_an_open_pull_request() -> None:
     """A retry must surface an existing PR instead of opening a second one."""
     yaml = pytest.importorskip("yaml")
