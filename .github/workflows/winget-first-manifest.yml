@@ -8,8 +8,8 @@ name: WinGet First Manifest
 #
 # Every later version is handled by the `publish-winget` job in release.yml.
 # That is why this workflow is first-version only: it refuses to run if the
-# package is already in winget-pkgs, so it cannot race the release pipeline or
-# open a duplicate PR.
+# package is already in winget-pkgs or already has an open pull request, so it
+# cannot race the release pipeline or open a duplicate PR.
 #
 # Run it from the CLI repository's Actions tab once the release you want to publish exists:
 #   release_tag = v0.21.2 (or newer), dry_run = true, then dry_run = false.
@@ -137,6 +137,27 @@ jobs:
           fi
 
           echo "$PACKAGE_IDENTIFIER is not in winget-pkgs yet (404) - this run will create it."
+
+      - name: Refuse to duplicate an open WinGet pull request
+        env:
+          GH_TOKEN: ${{ secrets.WINGET_TOKEN }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${RELEASE_TAG#v}"
+          query="repo:microsoft/winget-pkgs is:pr is:open \"${PACKAGE_IDENTIFIER}\" \"${version}\""
+          existing="$(gh api search/issues --method GET \
+            --field q="$query" \
+            --field per_page=100 \
+            --jq '.items[] | [.number, .html_url, .title] | @tsv')"
+          if [ -n "$existing" ]; then
+            echo "::error::An open WinGet pull request already exists for $PACKAGE_IDENTIFIER $version."
+            echo "$existing"
+            echo "::error::Wait for that pull request or close it before submitting another first manifest."
+            exit 1
+          fi
+          echo "No open WinGet pull request found for $PACKAGE_IDENTIFIER $version."
 
       - name: Render the manifests
         id: render
