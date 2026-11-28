@@ -44,9 +44,9 @@ runtime keeps its own version line and release process.
 
 ## Version 0.23.2
 
-After applying a staged update, the CLI restarts the installed executable and forwards the original arguments and exit status. This fixes a Linux error on the first command after an update.
+On Unix the updater preserves executable access permissions. After applying a staged update, the CLI restarts the installed executable and forwards the original arguments and exit status.
 
-When upgrading from 0.23.0 or 0.23.1 on Linux, an older updater can report `No such file or directory` immediately after `staged binary update applied`. Run `dccmcp --version` to confirm the replacement, then repeat the interrupted command once. The same procedure applies to `dcc-mcp-cli`.
+On Linux, upgrade standalone installations of 0.23.0 and 0.23.1 using the official install script below. Those updaters can leave the replacement without execute permission and report `No such file or directory` when restarting. Running the installer again restores both command names. Use `--install-dir` to select the existing installation directory.
 
 ## Version 0.23.1
 
