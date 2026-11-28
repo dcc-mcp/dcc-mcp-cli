@@ -42,6 +42,12 @@ This release completes the post-boundary CLI maintenance flow.
 The `dcc-mcp-cli` executable remains a compatibility alias. The DCC-CUA
 runtime keeps its own version line and release process.
 
+## Version 0.23.2
+
+After applying a staged update, the CLI restarts the installed executable and forwards the original arguments and exit status. This fixes a Linux error on the first command after an update.
+
+When upgrading from 0.23.0 or 0.23.1 on Linux, an older updater can report `No such file or directory` immediately after `staged binary update applied`. Run `dccmcp --version` to confirm the replacement, then repeat the interrupted command once. The same procedure applies to `dcc-mcp-cli`.
+
 ## Version 0.23.1
 
 The standard Linux x86-64 binaries, update manifest and Python wheel use the Ubuntu 22.04 build baseline. Both CLI names start on Ubuntu 22.04 with glibc 2.35. Existing standalone installations can run `dccmcp update` to stage the compatible release.

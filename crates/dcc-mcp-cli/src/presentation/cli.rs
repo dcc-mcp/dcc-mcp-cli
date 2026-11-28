@@ -194,16 +194,25 @@ pub async fn run() -> anyhow::Result<()> {
     // called directly instead of through the executable's read-only gate.
     let args =
         Args::try_parse_annotated_from(std::env::args_os()).unwrap_or_else(|error| error.exit());
-    if UpdateMaintenance::from_skip_flag(args.no_update_maintenance)
+    if let Some(executable) = UpdateMaintenance::from_skip_flag(args.no_update_maintenance)
         .run(apply_staged_update)
-        .unwrap_or(false)
+        .flatten()
     {
-        return restart_after_update();
+        return restart_after_update(executable);
     }
     run_with_args(args).await
 }
 
-fn apply_staged_update() -> bool {
+fn apply_staged_update() -> Option<PathBuf> {
+    // After replacement Linux may report the unlinked inode as "/path (deleted)".
+    // Capture the installed path while the running executable still owns it.
+    let executable = match crate::application::current_exe::current_exe() {
+        Ok(path) => path,
+        Err(e) => {
+            eprintln!("warning: could not resolve the CLI path for update maintenance: {e}");
+            return None;
+        }
+    };
     // Apply any staged binary update before running commands (CLI restart
     // is the user's next invocation after `update apply`). Package-managed
     // installs are not excluded: `dcc-mcp-cli update` is the supported flow
@@ -214,30 +223,22 @@ fn apply_staged_update() -> bool {
         crate::application::update::runtime_cli_name(),
     ) {
         Ok(true) => {
-            if let Err(e) = refresh_marker_after_update() {
+            if let Err(e) =
+                crate::application::package_manager::record_self_updated_size(&executable)
+            {
                 // Never fatal: the replacement already landed, so failing to
                 // re-record it only costs an extra unpack on a later launch.
                 eprintln!("warning: could not refresh the package manager marker: {e}");
             }
             eprintln!("info: staged binary update applied; restarting");
-            true
+            Some(executable)
         }
-        Ok(false) => false,
+        Ok(false) => None,
         Err(e) => {
             eprintln!("warning: failed to apply staged binary update: {e}");
-            false
+            None
         }
     }
-}
-
-/// Keep the package manager marker in sync with a binary that was replaced.
-///
-/// Only package-managed installs keep a marker, and only those installs have
-/// a wrapper that fingerprints the binary, so a direct install has nothing to
-/// update and the helper stays quiet.
-fn refresh_marker_after_update() -> anyhow::Result<()> {
-    let executable = crate::application::current_exe::current_exe()?;
-    crate::application::package_manager::record_self_updated_size(&executable)
 }
 
 /// Parse repeatable `--adapter-python <dcc_type>=<python>` values.
@@ -259,8 +260,7 @@ fn parse_adapter_python(raw: &[String]) -> anyhow::Result<BTreeMap<String, PathB
     Ok(parsed)
 }
 
-fn restart_after_update() -> anyhow::Result<()> {
-    let executable = std::env::current_exe()?;
+fn restart_after_update(executable: PathBuf) -> anyhow::Result<()> {
     let status = std::process::Command::new(executable)
         .args(std::env::args_os().skip(1))
         .env("DCC_MCP_UPDATE_JUST_APPLIED", "1")
