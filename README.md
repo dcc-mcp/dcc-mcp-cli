@@ -42,6 +42,10 @@ This release completes the post-boundary CLI maintenance flow.
 The `dcc-mcp-cli` executable remains a compatibility alias. The DCC-CUA
 runtime keeps its own version line and release process.
 
+## Version 0.23.1
+
+The standard Linux x86-64 binaries, update manifest and Python wheel use the Ubuntu 22.04 build baseline. Both CLI names start on Ubuntu 22.04 with glibc 2.35. Existing standalone installations can run `dccmcp update` to stage the compatible release.
+
 ## Version 0.23.0
 
 The `dcc-mcp-cli` Python distribution follows the standalone CLI release line. Its platform wheels provide both console entry points.
