@@ -28,7 +28,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-22.04
             platform: linux-x86_64
             target: native
             executable_suffix: ''
@@ -92,6 +92,13 @@ jobs:
           cargo build --release --locked "${target_args[@]}" -p dcc-mcp-cli --bin dccmcp --bin dcc-mcp-cli
           cp "$output_dir/dccmcp${{ matrix.executable_suffix }}" "dccmcp-${{ matrix.platform }}${{ matrix.executable_suffix }}"
           cp "$output_dir/dcc-mcp-cli${{ matrix.executable_suffix }}" "dcc-mcp-cli-${{ matrix.platform }}${{ matrix.executable_suffix }}"
+      - name: Verify both CLI names start on Ubuntu 22.04
+        if: runner.os == 'Linux'
+        run: |
+          test "$(getconf GNU_LIBC_VERSION)" = "glibc 2.35"
+          ./dccmcp-linux-x86_64 --version
+          ./dcc-mcp-cli-linux-x86_64 --version
+
       - name: Build macOS universal2 binaries
         if: matrix.target == 'universal2'
         shell: bash
