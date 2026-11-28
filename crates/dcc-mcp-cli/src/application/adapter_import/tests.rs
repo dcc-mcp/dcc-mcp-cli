@@ -893,15 +893,12 @@ fn assert_writer_exited(pid: u32, start_time: u64, context: &str) {
 
 #[cfg(unix)]
 fn unix_process_start_time(pid: u32) -> Result<Option<u64>, String> {
-    if let Ok(stat) = std::fs::read_to_string(format!("/proc/{pid}/stat")) {
-        if let Some(after_command) = stat.rsplit(')').nth(1) {
-            let mut fields = after_command.split_whitespace();
-            if let Some(start_time) = fields.nth(19) {
-                if let Ok(start_time) = start_time.parse::<u64>() {
-                    return Ok(Some(start_time));
-                }
-            }
-        }
+    if let Ok(stat) = std::fs::read_to_string(format!("/proc/{pid}/stat"))
+        && let Some(after_command) = stat.rsplit(')').nth(1)
+        && let Some(start_time) = after_command.split_whitespace().nth(19)
+        && let Ok(start_time) = start_time.parse::<u64>()
+    {
+        return Ok(Some(start_time));
     }
 
     let output = std::process::Command::new("ps")
@@ -967,7 +964,9 @@ fn parse_ps_lstart(text: &str) -> Option<u64> {
     if time.len() != 3 {
         return None;
     }
-    let leap = |value: u64| value % 4 == 0 && (value % 100 != 0 || value % 400 == 0);
+    let leap = |value: u64| {
+        value.is_multiple_of(4) && (!value.is_multiple_of(100) || value.is_multiple_of(400))
+    };
     let days_before_year: u64 = (1970..year)
         .map(|value| if leap(value) { 366 } else { 365 })
         .sum();
