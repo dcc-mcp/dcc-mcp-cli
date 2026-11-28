@@ -8,8 +8,8 @@ mod cache;
 mod cli_release;
 
 pub use cache::{
-    ReadOnlyCliUpdateCache, cached_cli_update, is_background_refresh, just_applied_status,
-    read_cli_update_cache, record_cli_update, spawn_cli_update_refresh,
+    ReadOnlyCliUpdateCache, cached_cli_update, is_background_refresh, is_update_restart,
+    just_applied_status, read_cli_update_cache, record_cli_update, spawn_cli_update_refresh,
 };
 
 pub(crate) fn runtime_cli_name() -> &'static str {

@@ -204,6 +204,9 @@ pub async fn run() -> anyhow::Result<()> {
 }
 
 fn apply_staged_update() -> Option<PathBuf> {
+    if crate::application::update::is_update_restart() {
+        return None;
+    }
     // After replacement Linux may report the unlinked inode as "/path (deleted)".
     // Capture the installed path while the running executable still owns it.
     let executable = match crate::application::current_exe::current_exe() {
@@ -219,8 +222,9 @@ fn apply_staged_update() -> Option<PathBuf> {
     // everywhere, and the replacement lands on the running binary. See
     // application::package_manager for the provenance marker and the
     // metadata drift it reports.
-    match dcc_mcp_updater::Updater::apply_staged_update(
+    match dcc_mcp_updater::Updater::apply_staged_update_for_version(
         crate::application::update::runtime_cli_name(),
+        crate::application::update::CLI_VERSION,
     ) {
         Ok(true) => {
             if let Err(e) =

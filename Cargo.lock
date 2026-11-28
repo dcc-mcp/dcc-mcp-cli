@@ -778,8 +778,8 @@ checksum = "4583a4551df46e2792f82ceeac45e850d2e2d5debba0b91f102385cda5b11f06"
 
 [[package]]
 name = "dcc-mcp-actions"
-version = "0.22.1"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
+version = "0.22.2"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.2#696e96494ecb779b6052f0dd4bf5e90dd6bf324b"
 dependencies = [
  "dashmap",
  "dcc-mcp-models",
@@ -793,8 +793,8 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-artefact"
-version = "0.22.1"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
+version = "0.22.2"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.2#696e96494ecb779b6052f0dd4bf5e90dd6bf324b"
 dependencies = [
  "chrono",
  "hex",
@@ -810,8 +810,8 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-attestation"
-version = "0.22.1"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
+version = "0.22.2"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.2#696e96494ecb779b6052f0dd4bf5e90dd6bf324b"
 dependencies = [
  "sha2 0.11.2",
  "sigstore-verify",
@@ -821,8 +821,8 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-capture"
-version = "0.22.1"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
+version = "0.22.2"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.2#696e96494ecb779b6052f0dd4bf5e90dd6bf324b"
 dependencies = [
  "image",
  "libc",
@@ -836,8 +836,8 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-catalog"
-version = "0.22.1"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
+version = "0.22.2"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.2#696e96494ecb779b6052f0dd4bf5e90dd6bf324b"
 dependencies = [
  "dcc-mcp-gateway-search",
  "jsonschema",
@@ -897,8 +897,8 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-client"
-version = "0.22.1"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
+version = "0.22.2"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.2#696e96494ecb779b6052f0dd4bf5e90dd6bf324b"
 dependencies = [
  "dcc-mcp-jsonrpc",
  "reqwest 0.13.5",
@@ -908,8 +908,8 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-db"
-version = "0.22.1"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
+version = "0.22.2"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.2#696e96494ecb779b6052f0dd4bf5e90dd6bf324b"
 dependencies = [
  "dcc-mcp-models",
  "dcc-mcp-paths",
@@ -923,8 +923,8 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-gateway"
-version = "0.22.1"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
+version = "0.22.2"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.2#696e96494ecb779b6052f0dd4bf5e90dd6bf324b"
 dependencies = [
  "axum",
  "base64 0.22.1",
@@ -973,8 +973,8 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-gateway-admin"
-version = "0.22.1"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
+version = "0.22.2"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.2#696e96494ecb779b6052f0dd4bf5e90dd6bf324b"
 dependencies = [
  "axum",
  "chrono",
@@ -993,8 +993,8 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-gateway-core"
-version = "0.22.1"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
+version = "0.22.2"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.2#696e96494ecb779b6052f0dd4bf5e90dd6bf324b"
 dependencies = [
  "chrono",
  "dcc-mcp-gateway-search",
@@ -1009,8 +1009,8 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-gateway-ensure"
-version = "0.22.1"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
+version = "0.22.2"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.2#696e96494ecb779b6052f0dd4bf5e90dd6bf324b"
 dependencies = [
  "anyhow",
  "dirs",
@@ -1025,8 +1025,8 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-gateway-search"
-version = "0.22.1"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
+version = "0.22.2"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.2#696e96494ecb779b6052f0dd4bf5e90dd6bf324b"
 dependencies = [
  "nucleo-matcher",
  "serde",
@@ -1037,8 +1037,8 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-host"
-version = "0.22.1"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
+version = "0.22.2"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.2#696e96494ecb779b6052f0dd4bf5e90dd6bf324b"
 dependencies = [
  "parking_lot",
  "thiserror",
@@ -1049,8 +1049,8 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-host-rpc"
-version = "0.22.1"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
+version = "0.22.2"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.2#696e96494ecb779b6052f0dd4bf5e90dd6bf324b"
 dependencies = [
  "async-trait",
  "dcc-mcp-protocols",
@@ -1066,8 +1066,8 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-http"
-version = "0.22.1"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
+version = "0.22.2"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.2#696e96494ecb779b6052f0dd4bf5e90dd6bf324b"
 dependencies = [
  "axum",
  "base64 0.22.1",
@@ -1114,8 +1114,8 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-http-server"
-version = "0.22.1"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
+version = "0.22.2"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.2#696e96494ecb779b6052f0dd4bf5e90dd6bf324b"
 dependencies = [
  "async-trait",
  "base64 0.22.1",
@@ -1147,8 +1147,8 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-http-types"
-version = "0.22.1"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
+version = "0.22.2"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.2#696e96494ecb779b6052f0dd4bf5e90dd6bf324b"
 dependencies = [
  "base64 0.22.1",
  "dcc-mcp-gateway-core",
@@ -1163,8 +1163,8 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-job"
-version = "0.22.1"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
+version = "0.22.2"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.2#696e96494ecb779b6052f0dd4bf5e90dd6bf324b"
 dependencies = [
  "chrono",
  "dashmap",
@@ -1180,8 +1180,8 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-jsonrpc"
-version = "0.22.1"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
+version = "0.22.2"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.2#696e96494ecb779b6052f0dd4bf5e90dd6bf324b"
 dependencies = [
  "base64 0.22.1",
  "dcc-mcp-protocols",
@@ -1193,8 +1193,8 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-marketplace"
-version = "0.22.1"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
+version = "0.22.2"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.2#696e96494ecb779b6052f0dd4bf5e90dd6bf324b"
 dependencies = [
  "dcc-mcp-attestation",
  "dcc-mcp-catalog",
@@ -1212,8 +1212,8 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-models"
-version = "0.22.1"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
+version = "0.22.2"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.2#696e96494ecb779b6052f0dd4bf5e90dd6bf324b"
 dependencies = [
  "dcc-mcp-naming",
  "rmp-serde",
@@ -1227,8 +1227,8 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-naming"
-version = "0.22.1"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
+version = "0.22.2"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.2#696e96494ecb779b6052f0dd4bf5e90dd6bf324b"
 dependencies = [
  "thiserror",
  "workspace-hack",
@@ -1236,8 +1236,8 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-paths"
-version = "0.22.1"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
+version = "0.22.2"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.2#696e96494ecb779b6052f0dd4bf5e90dd6bf324b"
 dependencies = [
  "dirs",
  "serde_json",
@@ -1246,8 +1246,8 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-protocols"
-version = "0.22.1"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
+version = "0.22.2"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.2#696e96494ecb779b6052f0dd4bf5e90dd6bf324b"
 dependencies = [
  "parking_lot",
  "serde",
@@ -1258,8 +1258,8 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-sandbox"
-version = "0.22.1"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
+version = "0.22.2"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.2#696e96494ecb779b6052f0dd4bf5e90dd6bf324b"
 dependencies = [
  "parking_lot",
  "serde",
@@ -1272,8 +1272,8 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-sidecar"
-version = "0.22.1"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
+version = "0.22.2"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.2#696e96494ecb779b6052f0dd4bf5e90dd6bf324b"
 dependencies = [
  "anyhow",
  "axum",
@@ -1296,8 +1296,8 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-skill-rest"
-version = "0.22.1"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
+version = "0.22.2"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.2#696e96494ecb779b6052f0dd4bf5e90dd6bf324b"
 dependencies = [
  "async-trait",
  "axum",
@@ -1322,8 +1322,8 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-skills"
-version = "0.22.1"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
+version = "0.22.2"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.2#696e96494ecb779b6052f0dd4bf5e90dd6bf324b"
 dependencies = [
  "dashmap",
  "dcc-mcp-actions",
@@ -1346,8 +1346,8 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-transport"
-version = "0.22.1"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
+version = "0.22.2"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.2#696e96494ecb779b6052f0dd4bf5e90dd6bf324b"
 dependencies = [
  "dashmap",
  "dcc-mcp-models",
@@ -1368,8 +1368,8 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-updater"
-version = "0.22.1"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
+version = "0.22.2"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.2#696e96494ecb779b6052f0dd4bf5e90dd6bf324b"
 dependencies = [
  "anyhow",
  "fs4",
@@ -1388,8 +1388,8 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-wire"
-version = "0.22.1"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
+version = "0.22.2"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.2#696e96494ecb779b6052f0dd4bf5e90dd6bf324b"
 dependencies = [
  "dcc-mcp-protocols",
  "serde",
@@ -1400,8 +1400,8 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-workflow"
-version = "0.22.1"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
+version = "0.22.2"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.2#696e96494ecb779b6052f0dd4bf5e90dd6bf324b"
 dependencies = [
  "base64 0.22.1",
  "chrono",
@@ -5735,7 +5735,7 @@ checksum = "1ebf944e87a7c253233ad6766e082e3cd714b5d03812acc24c318f549614536e"
 [[package]]
 name = "workspace-hack"
 version = "0.1.0"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.2#696e96494ecb779b6052f0dd4bf5e90dd6bf324b"
 dependencies = [
  "aho-corasick",
  "aws-lc-rs",

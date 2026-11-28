@@ -267,6 +267,18 @@ fn update_restarts_the_installed_path_with_original_arguments_and_exit_code() {
             String::from_utf8_lossy(&staged.stderr)
         );
 
+        let child = command()
+            .env("DCC_MCP_UPDATE_JUST_APPLIED", "1")
+            .args(["--output", "json", "dcc-types", "--offline"])
+            .output()
+            .unwrap();
+        assert!(
+            child.status.success(),
+            "{}",
+            String::from_utf8_lossy(&child.stderr)
+        );
+        assert!(serde_json::from_slice::<Value>(&child.stdout).is_ok());
+
         let forwarded = command()
             .args(["search", "--query", "mesh materials"])
             .output()
