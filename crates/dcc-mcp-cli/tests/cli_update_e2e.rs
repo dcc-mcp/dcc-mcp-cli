@@ -28,7 +28,10 @@ impl Drop for DownloadableUpdateFixture {
 }
 
 fn spawn_downloadable_update_fixture() -> DownloadableUpdateFixture {
-    const BINARY: &[u8] = b"dcc-mcp-cli staged update fixture binary v99";
+    const BINARY: &[u8] = br#"#!/bin/sh
+printf '%s\n' "$DCC_MCP_UPDATE_JUST_APPLIED" "$@"
+exit 17
+"#;
     let sha = sha256_hex(BINARY);
     let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
     let addr = listener.local_addr().unwrap();
@@ -48,11 +51,11 @@ fn spawn_downloadable_update_fixture() -> DownloadableUpdateFixture {
                 let sha = check_sha.clone();
                 let url = check_url.clone();
                 async move {
-                    Json(serde_json::json!({
-                        "dcc-mcp-cli": { "version": "99.0.0", "url": url,
-                        "sha256": sha,
-                        "release_notes": "CLI update" }
-                    }))
+                    let release = serde_json::json!({
+                        "version": "99.0.0", "url": url, "sha256": sha,
+                        "release_notes": "CLI update"
+                    });
+                    Json(serde_json::json!({ "dcc-mcp-cli": release, "dccmcp": release }))
                 }
             }),
         )
@@ -217,6 +220,62 @@ fn bare_update_downloads_verifies_and_stages_in_one_step() {
     );
     assert_eq!(update["update_policy"]["staged_for_next_launch"], true);
     assert_eq!(update["update_policy"]["running_server_restarted"], false);
+}
+
+#[cfg(unix)]
+#[test]
+fn update_restarts_the_installed_path_with_original_arguments_and_exit_code() {
+    let fixture = spawn_downloadable_update_fixture();
+    for source in [
+        env!("CARGO_BIN_EXE_dccmcp"),
+        env!("CARGO_BIN_EXE_dcc-mcp-cli"),
+    ] {
+        let data = TempDir::new().unwrap();
+        let install = data.path().join("installation path");
+        std::fs::create_dir(&install).unwrap();
+        let source = std::path::Path::new(source);
+        let cli = install.join(source.file_name().unwrap());
+        std::fs::copy(source, &cli).unwrap();
+        let command = || {
+            let mut cmd = std::process::Command::new(&cli);
+            cmd.env("HOME", data.path())
+                .env("XDG_DATA_HOME", data.path().join("data"))
+                .env("DCC_MCP_UPDATE_CACHE_DIR", data.path().join("cache"))
+                .env("DCC_MCP_CLI_AUTO_UPDATE", "false")
+                .env(
+                    "DCC_MCP_CLI_UPDATE_MANIFEST_URL",
+                    format!("{}/cli-manifest.json", fixture.base_url),
+                );
+            cmd
+        };
+        let staged = command()
+            .args([
+                "--no-update-maintenance",
+                "--no-auto-gateway",
+                "--base-url",
+                &fixture.base_url,
+                "update",
+            ])
+            .output()
+            .unwrap();
+        assert!(
+            staged.status.success(),
+            "{}",
+            String::from_utf8_lossy(&staged.stderr)
+        );
+
+        let forwarded = command()
+            .args(["search", "--query", "mesh materials"])
+            .output()
+            .unwrap();
+        assert_eq!(
+            forwarded.status.code(),
+            Some(17),
+            "{}",
+            String::from_utf8_lossy(&forwarded.stderr)
+        );
+        assert_eq!(forwarded.stdout, b"1\nsearch\n--query\nmesh materials\n");
+    }
 }
 
 #[test]
