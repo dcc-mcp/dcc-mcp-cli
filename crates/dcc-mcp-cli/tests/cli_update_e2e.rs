@@ -397,9 +397,9 @@ fn update_check_preserves_gateway_error_payload() {
             "update",
             "check",
             "--binary",
-            "dcc-mcp-cli",
+            "dcc-mcp-server",
             "--current-version",
-            "0.18.16",
+            "0.0.0",
         ])
         .output()
         .unwrap();
@@ -411,10 +411,10 @@ fn update_check_preserves_gateway_error_payload() {
     let update: Value = serde_json::from_slice(&output.stdout).unwrap();
     assert_eq!(
         update["error"],
-        "binary 'dcc-mcp-cli' not found in update manifest"
+        "binary 'dcc-mcp-server' not found in update manifest"
     );
-    assert_eq!(update["binary_name"], "dcc-mcp-cli");
-    assert_eq!(update["current_version"], "0.18.16");
+    assert_eq!(update["binary_name"], "dcc-mcp-server");
+    assert_eq!(update["current_version"], "0.0.0");
     assert!(
         !String::from_utf8_lossy(&output.stderr).contains("missing field"),
         "stderr should not expose serde decode failures"

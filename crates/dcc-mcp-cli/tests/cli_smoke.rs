@@ -16,6 +16,7 @@ use tokio::sync::oneshot;
 #[derive(Clone, Copy)]
 enum Case {
     Complete,
+    SessionSse,
     Repeat,
     WrongId,
     WrongVersion,
@@ -99,9 +100,28 @@ async fn mcp(
                 }
                 _ => {}
             }
+            if matches!(state.case, Case::SessionSse) {
+                return (
+                    [
+                        ("content-type", "text/event-stream"),
+                        ("mcp-session-id", "smoke-session"),
+                    ],
+                    format!("data: {response}\n\n"),
+                )
+                    .into_response();
+            }
             Json(response).into_response()
         }
+        "notifications/initialized" => {
+            if matches!(state.case, Case::SessionSse) {
+                assert_eq!(headers["mcp-session-id"], "smoke-session");
+            }
+            StatusCode::ACCEPTED.into_response()
+        }
         "tools/list" => {
+            if matches!(state.case, Case::SessionSse) {
+                assert_eq!(headers["mcp-session-id"], "smoke-session");
+            }
             let expected_protocol = if matches!(state.case, Case::InitLegacyProtocol) {
                 "2025-03-26"
             } else {
@@ -143,7 +163,7 @@ async fn mcp(
                 response["result"]["nextCursor"] = json!("3332");
             }
             match state.case {
-                Case::Complete => {}
+                Case::Complete | Case::SessionSse => {}
                 Case::Repeat => response["result"]["nextCursor"] = json!("3332"),
                 Case::WrongId => response["id"] = json!("stale-request"),
                 Case::WrongVersion => response["jsonrpc"] = json!("1.0"),
@@ -193,6 +213,14 @@ async fn mcp(
                 Case::InitEmptyProtocol | Case::InitUnsupportedProtocol => {
                     panic!("unsupported protocol must not list tools")
                 }
+            }
+            if matches!(state.case, Case::SessionSse) {
+                let ahead = json!({"jsonrpc":"2.0", "method":"notifications/progress"});
+                return (
+                    [(header::CONTENT_TYPE, "text/event-stream")],
+                    format!("data: {ahead}\r\n\r\ndata: {response}\r\n\r\n"),
+                )
+                    .into_response();
             }
             let status = if page == 2 && matches!(state.case, Case::HttpError) {
                 StatusCode::INTERNAL_SERVER_ERROR
@@ -488,4 +516,19 @@ fn smoke_uses_supported_negotiated_legacy_protocol_for_every_page() {
     assert!(success, "{result}");
     assert_eq!(listing(&result)["complete"], true);
     assert_eq!(fixture.requests.lock().unwrap().len(), 2);
+}
+
+#[test]
+fn smoke_preserves_sse_evidence_across_session_bound_pages() {
+    let fixture = fixture(Case::SessionSse);
+    let (success, report) = smoke(&fixture, "16");
+    assert!(success, "{report}");
+    let check = listing(&report);
+    assert_eq!(check["tool_count"], 2);
+    for page in check["pages"].as_array().unwrap() {
+        let bytes = page["raw_body_utf8"].as_str().unwrap().as_bytes();
+        assert!(bytes.starts_with(b"data: "));
+        assert_eq!(page["raw_body_sha256"], hex::encode(Sha256::digest(bytes)));
+        assert_eq!(page["response"]["id"], page["request"]["id"]);
+    }
 }

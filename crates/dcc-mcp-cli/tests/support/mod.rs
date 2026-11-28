@@ -633,7 +633,7 @@ pub(crate) fn spawn_gateway_fixture() -> GatewayFixture {
                             })),
                         );
                     }
-                    if binary != "dcc-mcp-server" {
+                    if binary != "dcc-mcp-server" || current == "0.0.0" {
                         return (
                             StatusCode::NOT_FOUND,
                             Json(json!({

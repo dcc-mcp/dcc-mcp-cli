@@ -77,7 +77,7 @@ jobs:
           cargo test --locked -p dcc-mcp-cli "${target[@]}" --test cli_verify_e2e -- --ignored verify_reports_incompatible_target_core_after_combined_slice --exact
           set -o pipefail
           cargo test --locked -p dcc-mcp-cli "${target[@]}" --test cli_host_e2e -- install_never_announces_nothing_at_the_call_site --exact --nocapture 2>&1 | tee host-consent.log
-          grep -Fx 'host-install-consent-gate exercised baseline=missing' host-consent.log
+          grep -E '(^| )host-install-consent-gate exercised baseline=missing$' host-consent.log
       - name: Verify command names
         shell: bash
         run: |

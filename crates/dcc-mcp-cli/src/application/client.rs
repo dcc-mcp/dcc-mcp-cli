@@ -436,9 +436,9 @@ impl DccMcpClient {
         let health = self.gateway.get_json(&self.endpoint.path("/health")).await;
         checks.push(check_json("health", &self.endpoint.path("/health"), health));
 
-        let initialize = self
+        let raw_initialize = self
             .gateway
-            .post_json_with_headers(
+            .post_bytes_with_headers(
                 &mcp_url,
                 &json!({
                     "jsonrpc": "2.0",
@@ -459,7 +459,33 @@ impl DccMcpClient {
                 ],
             )
             .await;
-        let mut initialize = check_json("mcp_initialize", &mcp_url, initialize);
+        let mut session = None;
+        let initialize =
+            raw_initialize
+                .map_err(ClientError::from)
+                .and_then(|(status, headers, bytes)| {
+                    if !status.is_success() {
+                        return Err(HttpError::Status {
+                            status,
+                            body: String::from_utf8_lossy(&bytes).into_owned(),
+                        }
+                        .into());
+                    }
+                    session = headers
+                        .get("mcp-session-id")
+                        .map(|id| id.to_str().map(str::to_owned))
+                        .transpose()
+                        .map_err(|_| {
+                            ClientError::Protocol("invalid MCP session ID header".into())
+                        })?;
+                    decode_smoke_message(&headers, &bytes, "smoke-initialize")
+                });
+        let mut initialize = match initialize {
+            Ok(body) => json!({"name":"mcp_initialize", "url":mcp_url, "ok":true, "response":body}),
+            Err(error) => {
+                json!({"name":"mcp_initialize", "url":mcp_url, "ok":false, "error":error.to_string()})
+            }
+        };
         let protocol = if initialize["ok"] == true {
             match validate_initialize(&initialize["response"]) {
                 Ok(protocol) => Some(protocol),
@@ -475,7 +501,33 @@ impl DccMcpClient {
         checks.push(initialize);
 
         checks.push(if let Some(protocol) = protocol {
-            self.smoke_tools_list(&mcp_url, max_pages, &protocol).await
+            let mut headers = vec![
+                ("Mcp-Protocol-Version", protocol.as_str()),
+                ("Accept", MCP_STREAMABLE_HTTP_ACCEPT),
+            ];
+            if let Some(session) = session.as_deref() {
+                headers.push(("Mcp-Session-Id", session));
+            }
+            let notification = json!({"jsonrpc":"2.0","method":"notifications/initialized"});
+            match self
+                .gateway
+                .post_bytes_with_headers(&mcp_url, &notification, &headers)
+                .await
+            {
+                Ok((status, _, _)) if status.is_success() => {
+                    self.smoke_tools_list(&mcp_url, max_pages, &headers).await
+                }
+                result => {
+                    let reason = match result {
+                        Ok((status, _, _)) => {
+                            format!("initialized notification returned HTTP {status}")
+                        }
+                        Err(error) => error.to_string(),
+                    };
+                    json!({"name":"mcp_tools_list", "url":mcp_url, "ok":false, "complete":false,
+                           "pages":[], "max_pages":max_pages, "error":reason})
+                }
+            }
         } else {
             json!({"name":"mcp_tools_list", "url":mcp_url, "ok":false,
                    "complete":false, "pages":[], "max_pages":max_pages,
@@ -508,7 +560,12 @@ impl DccMcpClient {
         })
     }
 
-    async fn smoke_tools_list(&self, url: &str, max_pages: usize, protocol: &str) -> Value {
+    async fn smoke_tools_list(
+        &self,
+        url: &str,
+        max_pages: usize,
+        headers: &[(&str, &str)],
+    ) -> Value {
         let mut pages = Vec::new();
         let mut cursor = None;
         let mut cursors = HashSet::new();
@@ -530,23 +587,17 @@ impl DccMcpClient {
                 .to_value();
             let response = self
                 .gateway
-                .post_bytes_with_headers(
-                    url,
-                    &request,
-                    &[
-                        ("Mcp-Protocol-Version", protocol),
-                        ("Accept", MCP_STREAMABLE_HTTP_ACCEPT),
-                    ],
-                )
+                .post_bytes_with_headers(url, &request, headers)
                 .await;
             match response {
-                Ok((status, body)) => {
+                Ok((status, response_headers, body)) => {
+                    let status = status.as_u16();
                     let mut captured = json!({"request":request, "http_status":status,
                         "raw_body_sha256":Sha256::digest(&body).iter().map(|byte| format!("{byte:02x}")).collect::<String>()});
                     let response = match std::str::from_utf8(&body) {
                         Ok(text) => {
                             captured["raw_body_utf8"] = json!(text);
-                            serde_json::from_slice::<Value>(&body)
+                            decode_smoke_message(&response_headers, &body, &id)
                                 .map_err(|error| error.to_string())
                         }
                         Err(error) => {
@@ -614,6 +665,47 @@ impl DccMcpClient {
             "tool_count": names.len(), "error": failure,
         })
     }
+}
+
+/// Select the correlated MCP reply while retaining the unmodified HTTP body as page evidence.
+fn decode_smoke_message(
+    headers: &reqwest::header::HeaderMap,
+    body: &[u8],
+    id: &str,
+) -> Result<Value, ClientError> {
+    let is_sse = headers
+        .get(reqwest::header::CONTENT_TYPE)
+        .and_then(|value| value.to_str().ok())
+        .and_then(|value| value.split(';').next())
+        .is_some_and(|value| value.trim().eq_ignore_ascii_case("text/event-stream"));
+    if !is_sse {
+        return serde_json::from_slice(body)
+            .map_err(|error| ClientError::Protocol(error.to_string()));
+    }
+    let text =
+        std::str::from_utf8(body).map_err(|error| ClientError::Protocol(error.to_string()))?;
+    let mut data = Vec::new();
+    for line in text.lines().chain(std::iter::once("")) {
+        if let Some(value) = line.strip_prefix("data:") {
+            data.push(value.strip_prefix(' ').unwrap_or(value));
+        } else if line.is_empty() && !data.is_empty() {
+            let event = data.join("\n");
+            data.clear();
+            if event == "[DONE]" {
+                continue;
+            }
+            let message: Value = serde_json::from_str(&event)
+                .map_err(|error| ClientError::Protocol(error.to_string()))?;
+            if message["id"] == id
+                && (message.get("result").is_some() || message.get("error").is_some())
+            {
+                return Ok(message);
+            }
+        }
+    }
+    Err(ClientError::Protocol(format!(
+        "no SSE reply for request {id}"
+    )))
 }
 
 fn validate_tools_page(

@@ -122,14 +122,15 @@ impl HttpGateway {
         url: &str,
         body: &Value,
         headers: &[(&str, &str)],
-    ) -> Result<(u16, Vec<u8>), HttpError> {
+    ) -> Result<(reqwest::StatusCode, header::HeaderMap, Vec<u8>), HttpError> {
         let mut request = self.client.post(url).json(body);
         for (name, value) in headers {
             request = request.header(*name, *value);
         }
         let response = request.send().await?;
-        let status = response.status().as_u16();
-        Ok((status, response.bytes().await?.to_vec()))
+        let status = response.status();
+        let headers = response.headers().clone();
+        Ok((status, headers, response.bytes().await?.to_vec()))
     }
 
     async fn json_response(response: reqwest::Response) -> Result<Value, HttpError> {

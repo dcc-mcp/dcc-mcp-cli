@@ -116,7 +116,7 @@ fn available_entries_accept_the_running_core_version() {
     let root = TempDir::new().unwrap();
     let mut entry = catalog_entry("photoshop");
     entry["policy"] = json!({"installation": "available"});
-    entry["min_core_version"] = json!(env!("CARGO_PKG_VERSION"));
+    entry["min_core_version"] = json!(env!("DCC_MCP_BUNDLED_CORE_VERSION"));
     let catalog = write_catalog(&root, vec![entry]);
     let output = cli(&catalog, "photoshop", false);
     assert!(output.status.success(), "{:?}", output);
@@ -124,7 +124,7 @@ fn available_entries_accept_the_running_core_version() {
     assert_eq!(plan["adapter"]["name"], "dcc-mcp-photoshop");
     assert_eq!(
         plan["adapter"]["min_core_version"],
-        env!("CARGO_PKG_VERSION")
+        env!("DCC_MCP_BUNDLED_CORE_VERSION")
     );
 }
 
