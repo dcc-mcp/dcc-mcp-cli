@@ -85,6 +85,18 @@ impl CliRelease {
         if received == 0 {
             anyhow::bail!("empty CLI update asset");
         }
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+
+            // Staging copies this file's mode to the installed executable.
+            // Preserve its access restrictions and omit privileged or shared-write bits.
+            let installed = crate::application::current_exe::current_exe()?;
+            let mode = std::fs::metadata(installed)?.permissions().mode() & 0o755;
+            temporary
+                .as_file()
+                .set_permissions(std::fs::Permissions::from_mode(mode))?;
+        }
         temporary.as_file().sync_all()?;
         Updater::stage_verified_update(temporary.path(), &info.binary_name, &info.sha256)?;
 

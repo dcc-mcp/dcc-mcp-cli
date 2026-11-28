@@ -225,6 +225,8 @@ fn bare_update_downloads_verifies_and_stages_in_one_step() {
 #[cfg(unix)]
 #[test]
 fn update_restarts_the_installed_path_with_original_arguments_and_exit_code() {
+    use std::os::unix::fs::PermissionsExt;
+
     let fixture = spawn_downloadable_update_fixture();
     for source in [
         env!("CARGO_BIN_EXE_dccmcp"),
@@ -236,6 +238,7 @@ fn update_restarts_the_installed_path_with_original_arguments_and_exit_code() {
         let source = std::path::Path::new(source);
         let cli = install.join(source.file_name().unwrap());
         std::fs::copy(source, &cli).unwrap();
+        std::fs::set_permissions(&cli, std::fs::Permissions::from_mode(0o750)).unwrap();
         let command = || {
             let mut cmd = std::process::Command::new(&cli);
             cmd.env("HOME", data.path())
@@ -275,6 +278,10 @@ fn update_restarts_the_installed_path_with_original_arguments_and_exit_code() {
             String::from_utf8_lossy(&forwarded.stderr)
         );
         assert_eq!(forwarded.stdout, b"1\nsearch\n--query\nmesh materials\n");
+        assert_eq!(
+            std::fs::metadata(&cli).unwrap().permissions().mode() & 0o7777,
+            0o750
+        );
     }
 }
 
