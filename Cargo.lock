@@ -237,6 +237,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "048006790404103c488e6c5616b3e7e702a71292aadda08e8f7698a9e0d2eb53"
 dependencies = [
  "aws-lc-sys",
+ "untrusted 0.7.1",
  "zeroize",
 ]
 
@@ -319,6 +320,12 @@ name = "base64"
 version = "0.23.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ac07cdecf99051d9a5238b80f35af32cdeba5b336e55d957b318b50137e18da5"
+
+[[package]]
+name = "base64ct"
+version = "1.8.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2af50177e190e07a26ab74f8b1efbfe2ef87da2116221318cb1c2e82baf7de06"
 
 [[package]]
 name = "bit-set"
@@ -535,6 +542,30 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0c9ea0ac24bc397ab3c98583a3c9ba74fa56b09a4449bbe172b9b1ddb016027a"
 
 [[package]]
+name = "cmpv2"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "961b955a666e25ee5a1091d219128d6e6401e3dab84efb1a2bf6b4035d797b39"
+dependencies = [
+ "crmf",
+ "der",
+ "spki",
+ "x509-cert",
+]
+
+[[package]]
+name = "cms"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7b77c319abfd5219629c45c34c89ba945ed3c5e49fcde9d16b6c3885f118a730"
+dependencies = [
+ "const-oid 0.9.6",
+ "der",
+ "spki",
+ "x509-cert",
+]
+
+[[package]]
 name = "color_quant"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -612,6 +643,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "crmf"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "36fe21b96d5b87f5de4b5b7202ec41c00110ac817ce6728fe75fb2fe5962ed92"
+dependencies = [
+ "cms",
+ "der",
+ "spki",
+ "x509-cert",
+]
+
+[[package]]
 name = "crossbeam-channel"
 version = "0.5.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -681,9 +724,9 @@ dependencies = [
 
 [[package]]
 name = "darling"
-version = "0.23.0"
+version = "0.24.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "25ae13da2f202d56bd7f91c25fba009e7717a1e4a1cc98a76d844b65ae912e9d"
+checksum = "ed17f5901b6630b993ca003def43f2f8ef4014fc13b047b57aad617ff32bc2ec"
 dependencies = [
  "darling_core",
  "darling_macro",
@@ -691,26 +734,26 @@ dependencies = [
 
 [[package]]
 name = "darling_core"
-version = "0.23.0"
+version = "0.24.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9865a50f7c335f53564bb694ef660825eb8610e0a53d3e11bf1b0d3df31e03b0"
+checksum = "6837e2cf7485aaae18f86181d2f0e9a7ed297a025e220aeabf63fdebd3a2ddff"
 dependencies = [
  "ident_case",
  "proc-macro2",
  "quote",
  "strsim",
- "syn 2.0.119",
+ "syn 3.0.10",
 ]
 
 [[package]]
 name = "darling_macro"
-version = "0.23.0"
+version = "0.24.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ac3984ec7bd6cfa798e62b4a642426a5be0e68f9401cfc2a01e3fa9ea2fcdb8d"
+checksum = "2ac7135c3ef02b2f7833bbeb1be5ba7f966dcde8a87c6b87f65a778d71a02785"
 dependencies = [
  "darling_core",
  "quote",
- "syn 2.0.119",
+ "syn 3.0.10",
 ]
 
 [[package]]
@@ -735,8 +778,8 @@ checksum = "4583a4551df46e2792f82ceeac45e850d2e2d5debba0b91f102385cda5b11f06"
 
 [[package]]
 name = "dcc-mcp-actions"
-version = "0.21.0"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.21.0#e5682f4c400ed64125dec6b0a4a3b2a1a62af0a0"
+version = "0.22.1"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
 dependencies = [
  "dashmap",
  "dcc-mcp-models",
@@ -750,15 +793,15 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-artefact"
-version = "0.21.0"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.21.0#e5682f4c400ed64125dec6b0a4a3b2a1a62af0a0"
+version = "0.22.1"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
 dependencies = [
  "chrono",
  "hex",
  "parking_lot",
  "serde",
  "serde_json",
- "sha2",
+ "sha2 0.11.2",
  "thiserror",
  "tracing",
  "uuid",
@@ -766,11 +809,21 @@ dependencies = [
 ]
 
 [[package]]
-name = "dcc-mcp-capture"
-version = "0.21.0"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.21.0#e5682f4c400ed64125dec6b0a4a3b2a1a62af0a0"
+name = "dcc-mcp-attestation"
+version = "0.22.1"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
 dependencies = [
- "dcc-mcp-shm",
+ "sha2 0.11.2",
+ "sigstore-verify",
+ "thiserror",
+ "workspace-hack",
+]
+
+[[package]]
+name = "dcc-mcp-capture"
+version = "0.22.1"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
+dependencies = [
  "image",
  "libc",
  "serde",
@@ -783,30 +836,36 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-catalog"
-version = "0.21.0"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.21.0#e5682f4c400ed64125dec6b0a4a3b2a1a62af0a0"
+version = "0.22.1"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
 dependencies = [
+ "dcc-mcp-gateway-search",
  "jsonschema",
  "serde",
  "serde_json",
  "serde_yaml_ng",
  "thiserror",
+ "uuid",
  "workspace-hack",
 ]
 
 [[package]]
 name = "dcc-mcp-cli"
-version = "0.21.3"
+version = "0.23.0"
 dependencies = [
  "anyhow",
  "axum",
  "base64 0.22.1",
  "clap",
  "dcc-mcp-actions",
+ "dcc-mcp-attestation",
  "dcc-mcp-catalog",
  "dcc-mcp-client",
+ "dcc-mcp-gateway",
  "dcc-mcp-gateway-ensure",
  "dcc-mcp-http",
+ "dcc-mcp-http-server",
+ "dcc-mcp-jsonrpc",
  "dcc-mcp-marketplace",
  "dcc-mcp-models",
  "dcc-mcp-sidecar",
@@ -814,22 +873,32 @@ dependencies = [
  "dcc-mcp-transport",
  "dcc-mcp-updater",
  "dirs",
+ "flate2",
+ "fs4",
  "hex",
+ "jsonschema",
+ "libc",
  "reqwest 0.13.5",
  "semver",
  "serde",
  "serde_json",
- "sha2",
+ "serde_yaml_ng",
+ "sha2 0.11.2",
+ "tar",
  "tempfile",
  "thiserror",
  "tokio",
+ "toml",
+ "toon-format",
+ "uuid",
+ "windows-sys 0.61.2",
  "zip",
 ]
 
 [[package]]
 name = "dcc-mcp-client"
-version = "0.21.0"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.21.0#e5682f4c400ed64125dec6b0a4a3b2a1a62af0a0"
+version = "0.22.1"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
 dependencies = [
  "dcc-mcp-jsonrpc",
  "reqwest 0.13.5",
@@ -839,8 +908,8 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-db"
-version = "0.21.0"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.21.0#e5682f4c400ed64125dec6b0a4a3b2a1a62af0a0"
+version = "0.22.1"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
 dependencies = [
  "dcc-mcp-models",
  "dcc-mcp-paths",
@@ -854,34 +923,34 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-gateway"
-version = "0.21.0"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.21.0#e5682f4c400ed64125dec6b0a4a3b2a1a62af0a0"
+version = "0.22.1"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
 dependencies = [
  "axum",
  "base64 0.22.1",
  "chrono",
  "dashmap",
  "dcc-mcp-actions",
+ "dcc-mcp-attestation",
  "dcc-mcp-catalog",
  "dcc-mcp-db",
+ "dcc-mcp-gateway-admin",
  "dcc-mcp-gateway-core",
+ "dcc-mcp-gateway-ensure",
  "dcc-mcp-jsonrpc",
  "dcc-mcp-marketplace",
  "dcc-mcp-models",
  "dcc-mcp-naming",
  "dcc-mcp-skill-rest",
  "dcc-mcp-skills",
- "dcc-mcp-telemetry",
  "dcc-mcp-transport",
  "dcc-mcp-updater",
- "dunce",
+ "dcc-mcp-workflow",
  "futures",
  "futures-util",
  "http",
  "lru",
- "opentelemetry",
  "parking_lot",
- "prometheus",
  "reqwest 0.13.5",
  "rusqlite",
  "serde",
@@ -903,14 +972,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "dcc-mcp-gateway-admin"
+version = "0.22.1"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
+dependencies = [
+ "axum",
+ "chrono",
+ "dcc-mcp-catalog",
+ "dcc-mcp-db",
+ "dcc-mcp-models",
+ "dcc-mcp-transport",
+ "dunce",
+ "parking_lot",
+ "reqwest 0.13.5",
+ "serde",
+ "serde_json",
+ "uuid",
+ "workspace-hack",
+]
+
+[[package]]
 name = "dcc-mcp-gateway-core"
-version = "0.21.0"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.21.0#e5682f4c400ed64125dec6b0a4a3b2a1a62af0a0"
+version = "0.22.1"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
 dependencies = [
  "chrono",
  "dcc-mcp-gateway-search",
+ "dcc-mcp-jsonrpc",
  "dcc-mcp-naming",
  "serde",
+ "serde_json",
  "tracing",
  "uuid",
  "workspace-hack",
@@ -918,10 +1009,11 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-gateway-ensure"
-version = "0.21.0"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.21.0#e5682f4c400ed64125dec6b0a4a3b2a1a62af0a0"
+version = "0.22.1"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
 dependencies = [
  "anyhow",
+ "dirs",
  "libc",
  "reqwest 0.13.5",
  "serde",
@@ -933,23 +1025,22 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-gateway-search"
-version = "0.21.0"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.21.0#e5682f4c400ed64125dec6b0a4a3b2a1a62af0a0"
+version = "0.22.1"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
 dependencies = [
  "nucleo-matcher",
  "serde",
+ "serde_json",
  "uuid",
  "workspace-hack",
 ]
 
 [[package]]
 name = "dcc-mcp-host"
-version = "0.21.0"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.21.0#e5682f4c400ed64125dec6b0a4a3b2a1a62af0a0"
+version = "0.22.1"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
 dependencies = [
- "dcc-mcp-wire",
  "parking_lot",
- "serde_json",
  "thiserror",
  "tokio",
  "tracing",
@@ -958,8 +1049,8 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-host-rpc"
-version = "0.21.0"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.21.0#e5682f4c400ed64125dec6b0a4a3b2a1a62af0a0"
+version = "0.22.1"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
 dependencies = [
  "async-trait",
  "dcc-mcp-protocols",
@@ -969,13 +1060,14 @@ dependencies = [
  "thiserror",
  "tokio",
  "tokio-tungstenite",
+ "tracing",
  "workspace-hack",
 ]
 
 [[package]]
 name = "dcc-mcp-http"
-version = "0.21.0"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.21.0#e5682f4c400ed64125dec6b0a4a3b2a1a62af0a0"
+version = "0.22.1"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
 dependencies = [
  "axum",
  "base64 0.22.1",
@@ -1000,6 +1092,7 @@ dependencies = [
  "dcc-mcp-workflow",
  "futures",
  "http",
+ "http-body-util",
  "parking_lot",
  "pin-project-lite",
  "reqwest 0.13.5",
@@ -1021,9 +1114,10 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-http-server"
-version = "0.21.0"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.21.0#e5682f4c400ed64125dec6b0a4a3b2a1a62af0a0"
+version = "0.22.1"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
 dependencies = [
+ "async-trait",
  "base64 0.22.1",
  "chrono",
  "dashmap",
@@ -1053,8 +1147,8 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-http-types"
-version = "0.21.0"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.21.0#e5682f4c400ed64125dec6b0a4a3b2a1a62af0a0"
+version = "0.22.1"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
 dependencies = [
  "base64 0.22.1",
  "dcc-mcp-gateway-core",
@@ -1069,8 +1163,8 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-job"
-version = "0.21.0"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.21.0#e5682f4c400ed64125dec6b0a4a3b2a1a62af0a0"
+version = "0.22.1"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
 dependencies = [
  "chrono",
  "dashmap",
@@ -1086,9 +1180,10 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-jsonrpc"
-version = "0.21.0"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.21.0#e5682f4c400ed64125dec6b0a4a3b2a1a62af0a0"
+version = "0.22.1"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
 dependencies = [
+ "base64 0.22.1",
  "dcc-mcp-protocols",
  "dcc-mcp-wire",
  "serde",
@@ -1098,16 +1193,17 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-marketplace"
-version = "0.21.0"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.21.0#e5682f4c400ed64125dec6b0a4a3b2a1a62af0a0"
+version = "0.22.1"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
 dependencies = [
+ "dcc-mcp-attestation",
  "dcc-mcp-catalog",
  "reqwest 0.13.5",
  "semver",
  "serde",
  "serde_json",
  "serde_yaml_ng",
- "sha2",
+ "sha2 0.11.2",
  "thiserror",
  "tokio",
  "workspace-hack",
@@ -1116,13 +1212,14 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-models"
-version = "0.21.0"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.21.0#e5682f4c400ed64125dec6b0a4a3b2a1a62af0a0"
+version = "0.22.1"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
 dependencies = [
  "dcc-mcp-naming",
  "rmp-serde",
  "serde",
  "serde_json",
+ "sha2 0.11.2",
  "thiserror",
  "uuid",
  "workspace-hack",
@@ -1130,8 +1227,8 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-naming"
-version = "0.21.0"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.21.0#e5682f4c400ed64125dec6b0a4a3b2a1a62af0a0"
+version = "0.22.1"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
 dependencies = [
  "thiserror",
  "workspace-hack",
@@ -1139,8 +1236,8 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-paths"
-version = "0.21.0"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.21.0#e5682f4c400ed64125dec6b0a4a3b2a1a62af0a0"
+version = "0.22.1"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
 dependencies = [
  "dirs",
  "serde_json",
@@ -1149,8 +1246,8 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-protocols"
-version = "0.21.0"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.21.0#e5682f4c400ed64125dec6b0a4a3b2a1a62af0a0"
+version = "0.22.1"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
 dependencies = [
  "parking_lot",
  "serde",
@@ -1161,8 +1258,8 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-sandbox"
-version = "0.21.0"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.21.0#e5682f4c400ed64125dec6b0a4a3b2a1a62af0a0"
+version = "0.22.1"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
 dependencies = [
  "parking_lot",
  "serde",
@@ -1174,27 +1271,9 @@ dependencies = [
 ]
 
 [[package]]
-name = "dcc-mcp-shm"
-version = "0.21.0"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.21.0#e5682f4c400ed64125dec6b0a4a3b2a1a62af0a0"
-dependencies = [
- "bytemuck",
- "ipckit",
- "libc",
- "lz4_flex",
- "parking_lot",
- "serde",
- "serde_json",
- "thiserror",
- "tracing",
- "uuid",
- "workspace-hack",
-]
-
-[[package]]
 name = "dcc-mcp-sidecar"
-version = "0.21.0"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.21.0#e5682f4c400ed64125dec6b0a4a3b2a1a62af0a0"
+version = "0.22.1"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
 dependencies = [
  "anyhow",
  "axum",
@@ -1202,6 +1281,7 @@ dependencies = [
  "dcc-mcp-gateway",
  "dcc-mcp-gateway-ensure",
  "dcc-mcp-host-rpc",
+ "dcc-mcp-jsonrpc",
  "dcc-mcp-transport",
  "libc",
  "reqwest 0.13.5",
@@ -1211,16 +1291,19 @@ dependencies = [
  "tokio",
  "tracing",
  "uuid",
+ "workspace-hack",
 ]
 
 [[package]]
 name = "dcc-mcp-skill-rest"
-version = "0.21.0"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.21.0#e5682f4c400ed64125dec6b0a4a3b2a1a62af0a0"
+version = "0.22.1"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
 dependencies = [
+ "async-trait",
  "axum",
  "chrono",
  "dcc-mcp-actions",
+ "dcc-mcp-gateway-search",
  "dcc-mcp-models",
  "dcc-mcp-skills",
  "futures",
@@ -1229,6 +1312,7 @@ dependencies = [
  "serde_json",
  "tokio",
  "tokio-stream",
+ "tokio-util",
  "tracing",
  "utoipa",
  "utoipa-scalar",
@@ -1238,11 +1322,12 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-skills"
-version = "0.21.0"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.21.0#e5682f4c400ed64125dec6b0a4a3b2a1a62af0a0"
+version = "0.22.1"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
 dependencies = [
  "dashmap",
  "dcc-mcp-actions",
+ "dcc-mcp-gateway-search",
  "dcc-mcp-models",
  "dcc-mcp-naming",
  "dcc-mcp-paths",
@@ -1252,37 +1337,20 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_yaml_ng",
+ "sha2 0.11.2",
  "thiserror",
  "tracing",
- "workspace-hack",
-]
-
-[[package]]
-name = "dcc-mcp-telemetry"
-version = "0.21.0"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.21.0#e5682f4c400ed64125dec6b0a4a3b2a1a62af0a0"
-dependencies = [
- "opentelemetry",
- "opentelemetry-stdout",
- "opentelemetry_sdk",
- "parking_lot",
- "prometheus",
- "serde",
- "serde_json",
- "thiserror",
- "tokio",
- "tracing",
- "tracing-opentelemetry",
- "tracing-subscriber",
+ "uuid",
  "workspace-hack",
 ]
 
 [[package]]
 name = "dcc-mcp-transport"
-version = "0.21.0"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.21.0#e5682f4c400ed64125dec6b0a4a3b2a1a62af0a0"
+version = "0.22.1"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
 dependencies = [
  "dashmap",
+ "dcc-mcp-models",
  "fs4",
  "ipckit",
  "parking_lot",
@@ -1294,29 +1362,34 @@ dependencies = [
  "tokio",
  "tracing",
  "uuid",
+ "windows-sys 0.61.2",
  "workspace-hack",
 ]
 
 [[package]]
 name = "dcc-mcp-updater"
-version = "0.21.0"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.21.0#e5682f4c400ed64125dec6b0a4a3b2a1a62af0a0"
+version = "0.22.1"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
 dependencies = [
  "anyhow",
+ "fs4",
+ "libc",
  "reqwest 0.13.5",
  "serde",
  "serde_json",
- "sha2",
+ "sha2 0.11.2",
+ "tempfile",
  "thiserror",
  "tokio",
  "tracing",
+ "windows-sys 0.61.2",
  "workspace-hack",
 ]
 
 [[package]]
 name = "dcc-mcp-wire"
-version = "0.21.0"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.21.0#e5682f4c400ed64125dec6b0a4a3b2a1a62af0a0"
+version = "0.22.1"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
 dependencies = [
  "dcc-mcp-protocols",
  "serde",
@@ -1327,8 +1400,8 @@ dependencies = [
 
 [[package]]
 name = "dcc-mcp-workflow"
-version = "0.21.0"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.21.0#e5682f4c400ed64125dec6b0a4a3b2a1a62af0a0"
+version = "0.22.1"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
 dependencies = [
  "base64 0.22.1",
  "chrono",
@@ -1342,13 +1415,37 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_yaml_ng",
- "sha2",
+ "sha2 0.11.2",
  "thiserror",
  "tokio",
  "tokio-util",
  "tracing",
  "uuid",
  "workspace-hack",
+]
+
+[[package]]
+name = "der"
+version = "0.7.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e7c1832837b905bbfb5101e07cc24c8deddf52f93225eee6ead5f4d63d53ddcb"
+dependencies = [
+ "const-oid 0.9.6",
+ "der_derive",
+ "flagset",
+ "pem-rfc7468",
+ "zeroize",
+]
+
+[[package]]
+name = "der_derive"
+version = "0.7.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8034092389675178f570469e6c3b0465d3d30b4505c294a6550db47f3c17ad18"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
 ]
 
 [[package]]
@@ -1564,10 +1661,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "filetime"
+version = "0.2.30"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e1255e7a9f1902190d4c10a75f2f7f495d3d3ce13e9ba26e6c48683a0f4dbed7"
+dependencies = [
+ "cfg-if",
+ "libc",
+]
+
+[[package]]
 name = "find-msvc-tools"
 version = "0.1.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1c66915cc5391097de7a2b0b972e8505aa33c0df401fd3a6811dbdb32881ba48"
+
+[[package]]
+name = "flagset"
+version = "0.4.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b7ac824320a75a52197e8f2d787f6a38b6718bb6897a35142d749af3c0e8f4fe"
 
 [[package]]
 name = "flate2"
@@ -2281,6 +2394,93 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3bd1574e617a9a6c1f8f8181bd7e841e1f20e4277607ef28945765188d6284d4"
 
 [[package]]
+name = "jiff"
+version = "0.2.46"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "175dc66334db3b9ab9985bf8b61cfed50dc16d20964bb47f9e479adcae984a7f"
+dependencies = [
+ "jiff-core 0.1.8",
+ "jiff-static 0.2.46",
+ "jiff-tzdb-platform",
+ "log",
+ "portable-atomic",
+ "portable-atomic-util",
+ "serde_core",
+ "windows-link",
+]
+
+[[package]]
+name = "jiff"
+version = "1.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "107f2e89536b6818514025f6787b0d94d819e54fe3b40365275fc753de485b3f"
+dependencies = [
+ "jiff-core 1.0.2",
+ "jiff-static 1.0.3",
+ "log",
+ "portable-atomic",
+ "portable-atomic-util",
+ "serde_core",
+]
+
+[[package]]
+name = "jiff-core"
+version = "0.1.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e599b80292e597019b8b3e392de3f4bea2959ddfb8c7dff60e035e9e311a2c1b"
+dependencies = [
+ "log",
+]
+
+[[package]]
+name = "jiff-core"
+version = "1.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d44c923edf2bf456a982253f1a9ee1f6e89e421dffd0065d9b9a581da0def58f"
+dependencies = [
+ "log",
+]
+
+[[package]]
+name = "jiff-static"
+version = "0.2.46"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c7b1af7547d47354bc438d797e3854601bde8f8d185780c5ba4ab27afa54f1ba"
+dependencies = [
+ "jiff-core 0.1.8",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
+]
+
+[[package]]
+name = "jiff-static"
+version = "1.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4996f71e569e3a3e32b925c28ef8f0027dc30bb1d594b33eeda409eea185f5c8"
+dependencies = [
+ "jiff-core 1.0.2",
+ "proc-macro2",
+ "quote",
+ "syn 3.0.10",
+]
+
+[[package]]
+name = "jiff-tzdb"
+version = "0.1.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0980fca2cc272465bd60e82397607ba9f33add9e48defd77923301bbd03808f2"
+
+[[package]]
+name = "jiff-tzdb-platform"
+version = "0.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "875a5a69ac2bab1a891711cf5eccbec1ce0341ea805560dcd90b7a2e925132e8"
+dependencies = [
+ "jiff-tzdb",
+]
+
+[[package]]
 name = "jni"
 version = "0.22.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2515,15 +2715,6 @@ name = "lru-slab"
 version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4050469837a6ff301cd14c1f8f24f88549e6d548f24f64e2148eb0f72cebc51f"
-
-[[package]]
-name = "lz4_flex"
-version = "0.13.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6a027efd2ad3c4dbb4123b5c018e3efbe7f6236da7c7612f122dad030f5d2de5"
-dependencies = [
- "twox-hash",
-]
 
 [[package]]
 name = "matchers"
@@ -2937,49 +3128,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7e036b411754132fd6b74e94b74e9a13c5cf606fa93d1885c35860d3060820b1"
 
 [[package]]
-name = "opentelemetry"
-version = "0.32.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b0142c63252a9e054e68a4c61a5778f7b14f576274d593f8ce883d191a099682"
-dependencies = [
- "futures-core",
- "futures-sink",
- "js-sys",
- "pin-project-lite",
- "thiserror",
- "tracing",
-]
-
-[[package]]
-name = "opentelemetry-stdout"
-version = "0.32.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a1b1c6a247d79091f0062a5f4bd058589525cf987a8d4c169440d9c1be72f0ad"
-dependencies = [
- "chrono",
- "opentelemetry",
- "opentelemetry_sdk",
-]
-
-[[package]]
-name = "opentelemetry_sdk"
-version = "0.32.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b59f80e1ac4d5ff7a2db8fb6c80badb7f0f3f858211fba08dd9aaec750894f9"
-dependencies = [
- "futures-channel",
- "futures-executor",
- "futures-util",
- "opentelemetry",
- "percent-encoding",
- "portable-atomic",
- "rand 0.9.5",
- "thiserror",
- "tokio",
- "tokio-stream",
-]
-
-[[package]]
 name = "option-ext"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3031,6 +3179,25 @@ name = "pastey"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2ee67f1008b1ba2321834326597b8e186293b049a023cdef258527550b9935b4"
+
+[[package]]
+name = "pem"
+version = "3.0.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1d30c53c26bc5b31a98cd02d20f25a7c8567146caf63ed593a9d87b2775291be"
+dependencies = [
+ "base64 0.22.1",
+ "serde_core",
+]
+
+[[package]]
+name = "pem-rfc7468"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "88b39c9bfcfc231068454382784bb460aae594343fb030d46e9f50a645418412"
+dependencies = [
+ "base64ct",
+]
 
 [[package]]
 name = "percent-encoding"
@@ -3223,20 +3390,6 @@ checksum = "4488a4a36b9a4ba6b9334a32a39971f77c1436ec82c38707bce707699cc3bbcb"
 dependencies = [
  "quote",
  "syn 2.0.119",
-]
-
-[[package]]
-name = "prometheus"
-version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3ca5326d8d0b950a9acd87e6a3f94745394f62e4dae1b1ee22b2bc0c394af43a"
-dependencies = [
- "cfg-if",
- "fnv",
- "lazy_static",
- "memchr",
- "parking_lot",
- "thiserror",
 ]
 
 [[package]]
@@ -3657,6 +3810,7 @@ dependencies = [
  "rustls-platform-verifier",
  "serde",
  "serde_json",
+ "serde_urlencoded",
  "sync_wrapper",
  "tokio",
  "tokio-rustls",
@@ -3687,31 +3841,36 @@ dependencies = [
  "cfg-if",
  "getrandom 0.2.17",
  "libc",
- "untrusted",
+ "untrusted 0.9.0",
  "windows-sys 0.52.0",
 ]
 
 [[package]]
 name = "rmcp"
-version = "1.8.0"
+version = "3.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1d1f571c72940a19d9532fe52dbea8bc9912bf1d766c2970bb824056b86f3f59"
+checksum = "fc4fa9a7558c480e1817c0f02e9a73782001ac1f47fb9d26cc073915963282ea"
 dependencies = [
  "async-trait",
- "base64 0.22.1",
+ "base64 0.23.1",
  "bytes",
  "chrono",
  "futures",
  "http",
  "http-body",
  "http-body-util",
+ "indexmap",
+ "jiff 1.0.3",
+ "libc",
  "pastey 0.2.3",
+ "percent-encoding",
  "pin-project-lite",
  "rand 0.10.4",
  "rmcp-macros",
  "schemars",
  "serde",
  "serde_json",
+ "sha2 0.11.2",
  "sse-stream",
  "thiserror",
  "tokio",
@@ -3719,20 +3878,22 @@ dependencies = [
  "tokio-util",
  "tower-service",
  "tracing",
+ "unicode-general-category",
+ "unicode-normalization",
  "uuid",
 ]
 
 [[package]]
 name = "rmcp-macros"
-version = "1.8.0"
+version = "3.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1aad0035b69380782d78ea95b508327e6deaa2235909053e596eea8f27b5e1d5"
+checksum = "43c1bf063ba32333267a8bc282ec33ae0edf56bf74890118cb0c7bf910a7a1c0"
 dependencies = [
  "darling",
  "proc-macro2",
  "quote",
  "serde_json",
- "syn 2.0.119",
+ "syn 3.0.10",
 ]
 
 [[package]]
@@ -3881,7 +4042,7 @@ dependencies = [
  "aws-lc-rs",
  "ring",
  "rustls-pki-types",
- "untrusted",
+ "untrusted 0.9.0",
 ]
 
 [[package]]
@@ -3895,6 +4056,12 @@ name = "ryu"
 version = "1.0.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9774ba4a74de5f7b1c1451ed6cd5285a32eddb5cccb8cc655a4e50009e06477f"
+
+[[package]]
+name = "ryu-js"
+version = "1.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1f232fd0249f55adbe7f15bee58bbbd3d40708000b84e6482066d2ba599e08a9"
 
 [[package]]
 name = "same-file"
@@ -4032,6 +4199,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde_json_canonicalizer"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fe52319a927259afbfa5180c5157cd8167edfd3e8c254f9558c7fef44c5649f2"
+dependencies = [
+ "ryu-js",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "serde_path_to_error"
 version = "0.1.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4039,6 +4217,15 @@ checksum = "10a9ff822e371bb5403e391ecd83e182e0e77ba7f6fe0160b795797109d1b457"
 dependencies = [
  "itoa",
  "serde",
+ "serde_core",
+]
+
+[[package]]
+name = "serde_spanned"
+version = "1.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9c187e0a369471c550af028cba56d4f4fa2a489ad28151ae95a4d340a2a8b782"
+dependencies = [
  "serde_core",
 ]
 
@@ -4086,6 +4273,17 @@ checksum = "bbfa15b3dddfee50a0fff136974b3e1bde555604ba463834a7eb7deb6417705d"
 
 [[package]]
 name = "sha2"
+version = "0.10.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a7507d819769d01a365ab707794a4084392c824f54a7a6a7862f8c3d0892b283"
+dependencies = [
+ "cfg-if",
+ "cpufeatures 0.2.17",
+ "digest 0.10.7",
+]
+
+[[package]]
+name = "sha2"
 version = "0.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5b0e5c7d67bc53f435386b2130fdc900488c5703770f6d8a4633060e34288a27"
@@ -4118,6 +4316,174 @@ checksum = "c4db69cba1110affc0e9f7bcd48bbf87b3f4fc7c61fc9155afd4c469eb3d6c1b"
 dependencies = [
  "errno",
  "libc",
+]
+
+[[package]]
+name = "signature"
+version = "2.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "77549399552de45a898a580c1b41d445bf730df867cc44e6c0233bbc4b8329de"
+dependencies = [
+ "digest 0.10.7",
+ "rand_core 0.6.4",
+]
+
+[[package]]
+name = "sigstore-bundle"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5948e95f63e900fa92936ecf72c7f2251f83d27560a35a4aae560cc745f8b687"
+dependencies = [
+ "base64 0.22.1",
+ "hex",
+ "serde",
+ "serde_json",
+ "sigstore-crypto",
+ "sigstore-rekor",
+ "sigstore-tsa",
+ "sigstore-types",
+ "thiserror",
+]
+
+[[package]]
+name = "sigstore-crypto"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "22f27364b37bec104a904f10a675c8cdf05d5e48a980569368f0cd0c119b2652"
+dependencies = [
+ "aws-lc-rs",
+ "base64 0.22.1",
+ "const-oid 0.9.6",
+ "der",
+ "digest 0.10.7",
+ "pem",
+ "rand_core 0.9.5",
+ "sha2 0.10.9",
+ "signature",
+ "sigstore-types",
+ "spki",
+ "thiserror",
+ "tracing",
+ "x509-cert",
+]
+
+[[package]]
+name = "sigstore-merkle"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0ee85fd9fb550efd7c8a59447cb0ef4eb02f1258f3ffa80c88d38427c3930af3"
+dependencies = [
+ "base64 0.22.1",
+ "hex",
+ "sigstore-crypto",
+ "sigstore-types",
+ "thiserror",
+]
+
+[[package]]
+name = "sigstore-rekor"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9b97c5a866f849a9445ae657bef0caa2db053a82827e6dae3a2b3de9c15a6a1a"
+dependencies = [
+ "base64 0.22.1",
+ "hex",
+ "reqwest 0.13.5",
+ "serde",
+ "serde_json",
+ "sigstore-crypto",
+ "sigstore-merkle",
+ "sigstore-types",
+ "thiserror",
+ "url",
+]
+
+[[package]]
+name = "sigstore-trust-root"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "389b54d1b8ace20ba86fdf90e5e655495f65f1abbc7d5d0eb7494defa9ad32f0"
+dependencies = [
+ "base64 0.22.1",
+ "hex",
+ "jiff 0.2.46",
+ "rustls-pki-types",
+ "serde",
+ "serde_json",
+ "sigstore-crypto",
+ "sigstore-types",
+ "thiserror",
+ "x509-cert",
+]
+
+[[package]]
+name = "sigstore-tsa"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b58fe92d4d8cf4b7215b927b70bc1245b6e0d70d801febdfe0cd265ad97ebf8b"
+dependencies = [
+ "aws-lc-rs",
+ "base64 0.22.1",
+ "cmpv2",
+ "cms",
+ "const-oid 0.9.6",
+ "der",
+ "hex",
+ "jiff 0.2.46",
+ "rand 0.9.5",
+ "reqwest 0.13.5",
+ "rustls-pki-types",
+ "rustls-webpki",
+ "sigstore-crypto",
+ "sigstore-types",
+ "thiserror",
+ "tracing",
+ "x509-cert",
+ "x509-tsp",
+]
+
+[[package]]
+name = "sigstore-types"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "236474c535a3157839926a0ae18f9c0c22b151e49634da6e5b18ad7cac8a3b69"
+dependencies = [
+ "base64 0.22.1",
+ "hex",
+ "pem",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
+name = "sigstore-verify"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "558f71aad0e1c5925d29ae2024f55f0f8898a7ad450c93668f99086624c421e0"
+dependencies = [
+ "base64 0.22.1",
+ "cms",
+ "const-oid 0.9.6",
+ "hex",
+ "jiff 0.2.46",
+ "pem",
+ "rustls-pki-types",
+ "rustls-webpki",
+ "serde",
+ "serde_json",
+ "serde_json_canonicalizer",
+ "sigstore-bundle",
+ "sigstore-crypto",
+ "sigstore-merkle",
+ "sigstore-rekor",
+ "sigstore-trust-root",
+ "sigstore-tsa",
+ "sigstore-types",
+ "thiserror",
+ "tls_codec",
+ "tracing",
+ "x509-cert",
 ]
 
 [[package]]
@@ -4183,6 +4549,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3763264f6b73151db08c50ff20d7d8a0b8796e021cdea7ceedad07b80155fa0e"
 dependencies = [
  "lock_api",
+]
+
+[[package]]
+name = "spki"
+version = "0.7.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d91ed6c858b01f942cd56b37a94b3e0a1798290327d1236e4d9cf4eaca44d29d"
+dependencies = [
+ "base64ct",
+ "der",
 ]
 
 [[package]]
@@ -4299,6 +4675,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "tar"
+version = "0.4.46"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3f6221d9a6003c78398e3b239969f352578258df48c8eb051caadae0015bc840"
+dependencies = [
+ "filetime",
+ "libc",
+ "xattr",
+]
+
+[[package]]
 name = "target-features"
 version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4409,6 +4796,27 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fd3ca314f692efd6c868f8408f53fe444634a845f96c028b97d35f6a1f79f0ee"
 
 [[package]]
+name = "tls_codec"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0de2e01245e2bb89d6f05801c564fa27624dbd7b1846859876c7dad82e90bf6b"
+dependencies = [
+ "tls_codec_derive",
+ "zeroize",
+]
+
+[[package]]
+name = "tls_codec_derive"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2d2e76690929402faae40aebdda620a2c0e25dd6d3b9afe48867dfd95991f4bd"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
+]
+
+[[package]]
 name = "tokio"
 version = "1.54.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4486,6 +4894,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "toml"
+version = "1.2.3+spec-1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "26b1f26e9485c1fa43ee89fe76e9f3fb9e2e52bb227f8594b4d687496b83d073"
+dependencies = [
+ "indexmap",
+ "serde_core",
+ "serde_spanned",
+ "toml_datetime",
+ "toml_parser",
+ "toml_writer",
+ "winnow",
+]
+
+[[package]]
 name = "toml_datetime"
 version = "1.1.3+spec-1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4502,6 +4925,12 @@ checksum = "0bb28d6e049a9766c3bd91a8326e6179f5b132dec87906bb97018ef7a2f3431a"
 dependencies = [
  "winnow",
 ]
+
+[[package]]
+name = "toml_writer"
+version = "1.2.0+spec-1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "009dbb7700f11c55ef83aebbe4c0e9cf1f1ac0844bd8d6f00dc38f302026e13a"
 
 [[package]]
 name = "toon-format"
@@ -4611,22 +5040,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tracing-opentelemetry"
-version = "0.33.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "adbc64cba7137545b8044cb1fe9814f7aacf3c6b5f9b45be8bb5db538befdb26"
-dependencies = [
- "js-sys",
- "opentelemetry",
- "smallvec",
- "tracing",
- "tracing-core",
- "tracing-log",
- "tracing-subscriber",
- "web-time",
-]
-
-[[package]]
 name = "tracing-serde"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4680,12 +5093,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "twox-hash"
-version = "2.1.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "86a801b3cea342a06d468c8710662aa29e5e05e4f5c0d62f00bbb7f2ad7941c2"
-
-[[package]]
 name = "typenum"
 version = "1.20.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4698,10 +5105,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8f20bdbfc9915686faa18fb5bbe8b4552778505defbf9f12289beefbc44092a6"
 
 [[package]]
+name = "unicode-general-category"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0b993bddc193ae5bd0d623b49ec06ac3e9312875fdae725a975c51db1cc1677f"
+
+[[package]]
 name = "unicode-ident"
 version = "1.0.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a2c754d6c33795a1c324727428e5a7dedb5b06195f9890bdbcba760d3e246563"
+
+[[package]]
+name = "unicode-normalization"
+version = "0.1.26"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "75cd3fb03d5288b3ba9a1ee103ac7e9cbb59f0b03d64f8ddfcc04dd42758a85d"
+dependencies = [
+ "tinyvec",
+]
 
 [[package]]
 name = "unicode-segmentation"
@@ -4714,6 +5136,12 @@ name = "unsafe-libyaml"
 version = "0.2.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "673aac59facbab8a9007c7f6108d11f63b603f7cabff99fabf650fea5c32b861"
+
+[[package]]
+name = "untrusted"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a156c684c91ea7d62626509bce3cb4e1d9ed5c4d978f7b4352658f96a4c26b4a"
 
 [[package]]
 name = "untrusted"
@@ -5307,9 +5735,10 @@ checksum = "1ebf944e87a7c253233ad6766e082e3cd714b5d03812acc24c318f549614536e"
 [[package]]
 name = "workspace-hack"
 version = "0.1.0"
-source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.21.0#e5682f4c400ed64125dec6b0a4a3b2a1a62af0a0"
+source = "git+https://github.com/dcc-mcp/dcc-mcp-core.git?tag=v0.22.1#48341d8c9126431f714ee16e36dabaefbcb8f03e"
 dependencies = [
  "aho-corasick",
+ "aws-lc-rs",
  "axum",
  "axum-core",
  "bit-set",
@@ -5320,7 +5749,9 @@ dependencies = [
  "chrono",
  "clap",
  "clap_builder",
+ "const-oid 0.9.6",
  "crossbeam-utils",
+ "der",
  "digest 0.10.7",
  "digest 0.11.3",
  "either",
@@ -5363,20 +5794,27 @@ dependencies = [
  "percent-encoding",
  "phf",
  "phf_shared",
+ "ppv-lite86",
  "proc-macro2",
  "quote",
+ "rand 0.10.4",
  "rand 0.8.8",
  "rand 0.9.5",
+ "rand_chacha 0.9.0",
  "rand_core 0.6.4",
  "regex",
  "regex-automata",
  "regex-syntax",
  "reqwest 0.13.5",
+ "ring",
  "rustls",
+ "rustls-pki-types",
  "rustls-webpki",
  "serde",
  "serde_core",
  "serde_json",
+ "sha2 0.10.9",
+ "signature",
  "simd-adler32",
  "slab",
  "smallvec",
@@ -5398,7 +5836,6 @@ dependencies = [
  "tracing-subscriber",
  "typenum",
  "url",
- "uuid",
  "winapi",
  "windows",
  "windows-sys 0.60.2",
@@ -5413,6 +5850,41 @@ name = "writeable"
 version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3ad82d2a33cdc9674dc7465672f271e096168fcdbe0f799d9e6db8c5892679dc"
+
+[[package]]
+name = "x509-cert"
+version = "0.2.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1301e935010a701ae5f8655edc0ad17c44bad3ac5ce8c39185f75453b720ae94"
+dependencies = [
+ "const-oid 0.9.6",
+ "der",
+ "sha1",
+ "signature",
+ "spki",
+ "tls_codec",
+]
+
+[[package]]
+name = "x509-tsp"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f5ceece934a21607055b7ac5c25adb56a2ff559804b10705dc674d1d838c15e1"
+dependencies = [
+ "cmpv2",
+ "cms",
+ "der",
+]
+
+[[package]]
+name = "xattr"
+version = "1.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "963d6fab92d5504b971dc8bd90ca743c2575e590bc8071ea5bc571598667ae08"
+dependencies = [
+ "libc",
+ "rustix",
+]
 
 [[package]]
 name = "y4m"

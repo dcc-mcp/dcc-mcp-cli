@@ -1,0 +1,78 @@
+name: Verified component installation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - Cargo.lock
+      - crates/dcc-mcp-cli/**
+      - .github/workflows/verified-component-installation.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verified-component-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qualify:
+    name: Verified package (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    env:
+      DCC_MCP_ADMIN_UI_PREBUILT: "1"
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+      - uses: dtolnay/rust-toolchain@1961bfc0c4a8bf07e0a0c98e1e2459c642ea70a0 # 1.95.0
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: verified-component-${{ runner.os }}
+      - name: Test local package validation
+        run: cargo test --locked -p dcc-mcp-cli --lib application::components
+      - name: Test isolated command admission
+        run: cargo test --locked -p dcc-mcp-cli --lib fixed_local_component_command
+      - name: Test executable startup isolation
+        run: cargo test --locked -p dcc-mcp-cli --test cli_update_inspection fixed_local_component_failures
+      - name: Build qualified Windows installer candidate
+        if: runner.os == 'Windows'
+        run: cargo build --target x86_64-pc-windows-msvc --locked -p dcc-mcp-cli --bin dcc-mcp-cli
+      - name: Bind candidate to source and bytes
+        if: runner.os == 'Windows'
+        shell: python
+        env:
+          QUALIFIED_SOURCE: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          import hashlib, json, os, pathlib, subprocess
+          binary = pathlib.Path("target/x86_64-pc-windows-msvc/debug/dcc-mcp-cli.exe")
+          source = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+          assert source == os.environ["QUALIFIED_SOURCE"]
+          receipt = {
+              "schema_version": 1, "source_revision": source,
+              "target": "x86_64-pc-windows-msvc", "profile": "dev",
+              "binary": binary.name, "sha256": hashlib.sha256(binary.read_bytes()).hexdigest(),
+              "run_id": os.environ["GITHUB_RUN_ID"], "run_attempt": os.environ["GITHUB_RUN_ATTEMPT"],
+              "purpose": "reviewed local component installer candidate; not a release",
+          }
+          pathlib.Path("candidate-receipt.json").write_text(json.dumps(receipt, indent=2) + "\n")
+      - name: Upload qualified candidate
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: verified-component-installer-windows-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            target/x86_64-pc-windows-msvc/debug/dcc-mcp-cli.exe
+            candidate-receipt.json
+          if-no-files-found: error
+          retention-days: 7

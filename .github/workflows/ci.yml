@@ -57,6 +57,15 @@ jobs:
             cargo test -p dcc-mcp-cli --tests --locked --target "${{ matrix.target }}" -- --test-threads=1
             cargo clippy -p dcc-mcp-cli --all-targets --locked --target "${{ matrix.target }}" -- -D warnings
           fi
+      - name: Verify target Core compatibility and host install consent
+        shell: bash
+        run: |
+          target=()
+          if [ "${{ matrix.target }}" != "native" ]; then target=(--target "${{ matrix.target }}"); fi
+          cargo test --locked -p dcc-mcp-cli "${target[@]}" --test cli_verify_e2e -- --ignored verify_reports_incompatible_target_core_after_combined_slice --exact
+          set -o pipefail
+          cargo test --locked -p dcc-mcp-cli "${target[@]}" --test cli_host_e2e -- install_never_announces_nothing_at_the_call_site --exact --nocapture 2>&1 | tee host-consent.log
+          grep -Fx 'host-install-consent-gate exercised baseline=missing' host-consent.log
       - name: Verify command names
         shell: bash
         run: |
