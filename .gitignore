@@ -4,3 +4,7 @@ Cargo.lock
 dist/
 *.zip
 *.sha256
+
+__pycache__/
+pkg/dcc-mcp-cli-bin/python/dcc_mcp_cli/_payload/
+pkg/dcc-mcp-cli-bin/THIRD_PARTY_LICENSES.txt

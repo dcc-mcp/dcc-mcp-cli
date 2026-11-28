@@ -256,7 +256,12 @@ fn cache_path() -> PathBuf {
         .map(PathBuf::from)
         .or_else(dirs::cache_dir)
         .unwrap_or_else(|| std::env::temp_dir().join("dcc-mcp-cache"));
-    root.join("dcc-mcp").join("update").join("cli-check.json")
+    let name = if runtime_cli_name() == "dcc-mcp-cli" {
+        "cli-check.json"
+    } else {
+        "dccmcp-check.json"
+    };
+    root.join("dcc-mcp").join("update").join(name)
 }
 
 fn refresh_lock_path(cache: &Path) -> PathBuf {

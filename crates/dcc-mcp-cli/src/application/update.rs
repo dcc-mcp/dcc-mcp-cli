@@ -19,7 +19,7 @@ pub(crate) fn runtime_cli_name() -> &'static str {
             .map(str::to_owned)
     });
     match name.as_deref() {
-        Some("dcc-mcp-cli") => "dcc-mcp-cli",
+        Some("dcc-mcp-cli" | "dcc-mcp-cli-bin") => "dcc-mcp-cli",
         Some("dccmcp") => "dccmcp",
         _ => "dccmcp",
     }

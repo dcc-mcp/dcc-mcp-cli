@@ -56,8 +56,8 @@ pub(crate) struct McpConnectionArgs {
     #[arg(long, env = "DCC_MCP_MCP_URL")]
     url: Option<String>,
     /// Timeout for each HTTP request.
-    #[arg(long, default_value = "30")]
-    timeout_secs: u64,
+    #[arg(long)]
+    timeout_secs: Option<u64>,
 }
 
 #[derive(Debug, Clone, clap::Args)]
@@ -178,7 +178,7 @@ fn new_mcp_client(
     let mcp_url = endpoint_for_mcp(raw_url);
     Ok(McpHttpClient::with_timeout(
         mcp_url,
-        Duration::from_secs(connection.timeout_secs.max(1)),
+        Duration::from_secs(connection.timeout_secs.unwrap_or(30).max(1)),
     )?)
 }
 

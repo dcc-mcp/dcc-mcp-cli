@@ -471,7 +471,7 @@ fn doctor_reports_local_defaults_without_starting_gateway() {
         doctor["server_binary"]["version"]
             .as_str()
             .unwrap()
-            .contains("dcc-mcp-cli")
+            .contains(concat!("dccmcp ", env!("CARGO_PKG_VERSION")))
     );
 }
 

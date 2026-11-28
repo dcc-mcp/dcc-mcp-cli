@@ -35,6 +35,11 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.14"
+      - name: Provide the Windows npm launcher for Core admin UI builds
+        if: runner.os == 'Windows'
+        uses: loonghao/vx@v0.9.34
+        with:
+          version: "0.9.34"
       - uses: dtolnay/rust-toolchain@1961bfc0c4a8bf07e0a0c98e1e2459c642ea70a0 # 1.95.0
       - uses: Swatinem/rust-cache@v2
         with:
