@@ -1,351 +1,427 @@
-use std::io::Write;
-
-use anyhow::Context;
 use dcc_mcp_updater::Updater;
-use reqwest::Url;
-use semver::Version;
-use serde::Deserialize;
 use serde_json::Value;
-use sha2::{Digest, Sha256};
 
+use crate::application::package_manager::PackageManagerMarker;
 use crate::domain::rest::Endpoint;
 
-const CLI_MANIFEST_ENV: &str = "DCC_MCP_CLI_UPDATE_MANIFEST_URL";
-const CLI_REPOSITORY: &str = "dcc-mcp/dcc-mcp-cli";
-const MAX_MANIFEST_BYTES: u64 = 1024 * 1024;
-const MAX_UPDATE_BYTES: u64 = 256 * 1024 * 1024;
+mod cache;
+mod cli_release;
 
-enum UpdateSource {
-    Gateway(Updater),
-    Cli {
-        binary_name: String,
-        current_version: String,
-        client: reqwest::Client,
-    },
+pub use cache::{
+    ReadOnlyCliUpdateCache, cached_cli_update, is_background_refresh, just_applied_status,
+    read_cli_update_cache, record_cli_update, spawn_cli_update_refresh,
+};
+
+pub(crate) fn runtime_cli_name() -> &'static str {
+    let name = std::env::current_exe().ok().and_then(|path| {
+        path.file_stem()
+            .and_then(|name| name.to_str())
+            .map(str::to_owned)
+    });
+    match name.as_deref() {
+        Some("dcc-mcp-cli" | "dcc-mcp-cli-bin") => "dcc-mcp-cli",
+        Some("dccmcp") => "dccmcp",
+        _ => "dccmcp",
+    }
 }
+pub const CLI_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-/// Service for updating the CLI itself or a gateway-managed runtime binary.
+/// The single command that checks, downloads, and stages a CLI update. Both
+/// the update policy and the post-apply notification point here so the
+/// advertised command cannot drift between them.
+const CLI_UPDATE_COMMAND: &str = "dcc-mcp-cli update";
+
+const SUCCESS_CHECK_INTERVAL_SECS: u64 = 24 * 60 * 60;
+const FAILURE_RETRY_INTERVAL_SECS: u64 = 60 * 60;
+
+/// Service for checking and applying binary updates through the gateway.
 pub struct UpdateService {
-    source: UpdateSource,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-struct CliManifestEntry {
-    version: String,
-    url: String,
-    sha256: String,
-    #[serde(default)]
-    release_notes: Option<String>,
-}
-
-#[derive(Debug)]
-struct CliUpdateInfo {
-    binary_name: String,
-    current_version: String,
-    latest_version: Version,
-    latest_version_text: String,
-    download_url: Url,
-    sha256: String,
-    release_notes: Option<String>,
-    manifest_url: Url,
+    updater: Updater,
+    cli: Option<cli_release::CliRelease>,
 }
 
 impl UpdateService {
-    /// Create a service backed by the gateway update endpoint.
     pub fn new(gateway_url: &str, binary_name: &str, current_version: &str) -> Self {
         Self {
-            source: UpdateSource::Gateway(Updater::new(gateway_url, binary_name, current_version)),
-        }
-    }
-
-    /// Select the official CLI release manifest for CLI binaries and the
-    /// gateway endpoint for server or other runtime binaries.
-    pub fn for_binary(gateway_url: &str, binary_name: &str, current_version: &str) -> Self {
-        if is_cli_binary(binary_name) {
-            Self {
-                source: UpdateSource::Cli {
-                    binary_name: binary_name.to_owned(),
-                    current_version: current_version.to_owned(),
-                    client: reqwest::Client::builder()
-                        .timeout(std::time::Duration::from_secs(30))
-                        .build()
-                        .expect("reqwest Client should build with default settings"),
-                },
-            }
-        } else {
-            Self::new(gateway_url, binary_name, current_version)
+            cli: matches!(binary_name, "dccmcp" | "dcc-mcp-cli")
+                .then(|| cli_release::CliRelease::new(binary_name, current_version)),
+            updater: Updater::new(gateway_url, binary_name, current_version),
         }
     }
 
     pub fn with_endpoint(endpoint: &Endpoint, binary_name: &str, current_version: &str) -> Self {
-        Self::for_binary(&endpoint.base_url, binary_name, current_version)
+        Self::new(&endpoint.base_url, binary_name, current_version)
     }
 
-    /// Check the selected update source without downloading an update.
-    pub async fn check(&self) -> anyhow::Result<Value> {
-        match &self.source {
-            UpdateSource::Gateway(updater) => Ok(updater.check_update_json().await?.body),
-            UpdateSource::Cli { .. } => Ok(self.cli_check_value().await?),
+    fn failure(&self, error: &anyhow::Error) -> Value {
+        enrich_check_payload(
+            serde_json::json!({
+                "status": "check_failed", "error": "update_check_failed", "message": error.to_string(),
+                "update_available": false, "binary_name": self.updater.binary_name(),
+            }),
+            false,
+            "live",
+            unix_timestamp(),
+        )
+    }
+
+    pub async fn auto_update(&self) -> anyhow::Result<()> {
+        if !Updater::has_staged_update(self.updater.binary_name())? {
+            let result = self.apply_update().await?;
+            if result.get("error").is_some() {
+                anyhow::bail!("{}", result["message"]);
+            }
         }
+        Ok(())
     }
 
-    /// Check, download, verify, and stage the selected binary for next launch.
-    pub async fn apply(&self) -> anyhow::Result<Value> {
-        match &self.source {
-            UpdateSource::Gateway(updater) => self.apply_gateway_update(updater).await,
-            UpdateSource::Cli { .. } => self.apply_cli_update().await,
-        }
-    }
-
-    /// Best-effort self-update used by `--auto-update` and its environment
-    /// variable equivalent. A staged update is reused without another network
-    /// request.
-    pub async fn auto_update(&self) -> anyhow::Result<Value> {
-        let UpdateSource::Cli { binary_name, .. } = &self.source else {
-            anyhow::bail!("automatic updates are only supported for the DCCMCP CLI");
+    /// Check for available updates and return the stable agent-facing contract.
+    pub async fn check_update(&self) -> anyhow::Result<Value> {
+        let checked = if let Some(cli) = &self.cli {
+            cli.check().await.map(|body| (body, true))
+        } else {
+            self.updater
+                .check_update_json()
+                .await
+                .map(|result| {
+                    let ok = result.success && result.body.get("error").is_none();
+                    (result.body, ok)
+                })
+                .map_err(anyhow::Error::from)
         };
-        if Updater::has_staged_update(binary_name)? {
-            return Ok(serde_json::json!({
-                "status": "pending",
-                "binary_name": binary_name,
-                "message": "A verified CLI update is already staged for the next launch."
-            }));
-        }
-        self.apply_cli_update().await
-    }
-
-    async fn apply_gateway_update(&self, updater: &Updater) -> anyhow::Result<Value> {
-        let info = updater.check_update().await?;
-        if !info.update_available {
-            return Ok(serde_json::json!({
-                "status": "up-to-date",
-                "current_version": info.current_version,
-                "latest_version": info.latest_version,
-                "message": "Already running the latest version."
-            }));
-        }
-
-        let downloaded = updater.download_update(&info).await?;
-        Updater::stage_update(&downloaded, updater.binary_name())?;
-
-        Ok(serde_json::json!({
-            "status": "staged",
-            "current_version": info.current_version,
-            "latest_version": info.latest_version,
-            "staged_at": downloaded.to_string_lossy(),
-            "message": "Update downloaded and staged. Restart the binary to apply."
-        }))
-    }
-
-    async fn apply_cli_update(&self) -> anyhow::Result<Value> {
-        let info = self.cli_update_info().await?;
-        if info.latest_version <= parse_version(&info.current_version)? {
-            return Ok(cli_update_value(
-                &info,
+        let (payload, success) = match checked {
+            Ok(checked) => checked,
+            Err(error) => (
+                serde_json::json!({
+                    "status": "check_failed",
+                    "error": "update_check_failed",
+                    "message": error.to_string(),
+                    "update_available": false,
+                    "binary_name": self.updater.binary_name(),
+                }),
                 false,
-                "Already running the latest version.",
+            ),
+        };
+        Ok(enrich_check_payload(
+            payload,
+            success,
+            "live",
+            unix_timestamp(),
+        ))
+    }
+
+    /// Check for and stage an update (download + verify; applied on relaunch).
+    ///
+    /// `dcc-mcp-cli update` performs the whole update in one step: it reuses
+    /// the same release source as `update check`, then downloads and
+    /// stages the release without requiring a separate confirmation flag.
+    /// Self-update is enabled for every install, package-managed ones
+    /// included: it replaces the running binary on the next launch and is the
+    /// supported flow everywhere. Nothing has been applied yet when this
+    /// returns, so the payload says `staged` and the advisory speaks in the
+    /// future tense. When a package manager installed this copy, the result
+    /// carries an advisory naming the version that manager still records,
+    /// because the staged update will move the binary past it.
+    pub async fn apply_update(&self) -> anyhow::Result<Value> {
+        let package_manager = crate::application::package_manager::detect();
+
+        if let Some(cli) = &self.cli {
+            let value = match cli.apply().await {
+                Ok(value) => value,
+                Err(error) => return Ok(self.failure(&error)),
+            };
+            let staged = value["update_available"] == true;
+            let mut value = enrich_check_payload(value, true, "live", unix_timestamp());
+            if staged {
+                value["status"] = "staged".into();
+                value["version_status"] = "staged".into();
+                if let Some(marker) = package_manager {
+                    value["package_manager"] = package_manager_advisory(&marker);
+                }
+            }
+            return Ok(value);
+        }
+
+        let info = match self.updater.check_update().await {
+            Ok(info) => info,
+            Err(error) => {
+                return Ok(enrich_check_payload(
+                    serde_json::json!({
+                        "status": "check_failed",
+                        "error": "update_check_failed",
+                        "message": error.to_string(),
+                        "update_available": false,
+                        "binary_name": self.updater.binary_name(),
+                    }),
+                    false,
+                    "live",
+                    unix_timestamp(),
+                ));
+            }
+        };
+
+        if !info.update_available {
+            return Ok(enrich_check_payload(
+                serde_json::json!({
+                    "status": "up-to-date",
+                    "current_version": info.current_version,
+                    "latest_version": info.latest_version,
+                    "update_available": false,
+                    "binary_name": self.updater.binary_name(),
+                    "message": "Already running the latest version."
+                }),
+                true,
+                "live",
+                unix_timestamp(),
             ));
         }
 
-        let response = self
-            .cli_client()
-            .get(info.download_url.clone())
-            .send()
-            .await?
-            .error_for_status()?;
-        if response
-            .content_length()
-            .is_some_and(|length| length > MAX_UPDATE_BYTES)
-        {
-            anyhow::bail!("CLI update exceeds the {MAX_UPDATE_BYTES}-byte safety limit");
-        }
+        // Download and verify the update binary.
+        let downloaded = self.updater.download_verified_update(&info).await?;
 
-        let bytes = response.bytes().await?;
-        if bytes.is_empty() || bytes.len() as u64 > MAX_UPDATE_BYTES {
-            anyhow::bail!("CLI update download is empty or exceeds the safety limit");
-        }
-        let actual = hex::encode(Sha256::digest(&bytes));
-        if actual != info.sha256.as_str() {
-            anyhow::bail!(
-                "CLI update checksum mismatch: expected {}, got {}",
-                info.sha256.as_str(),
-                actual
-            );
-        }
+        // Stage it for replacement on next launch
+        Updater::stage_verified_update(
+            downloaded.path(),
+            self.updater.binary_name(),
+            downloaded.sha256(),
+        )?;
 
-        let mut temporary =
-            tempfile::NamedTempFile::new().context("create CLI update staging file")?;
-        temporary.write_all(&bytes)?;
-        temporary.as_file().sync_all()?;
-        Updater::stage_update(temporary.path(), &info.binary_name)?;
-
-        Ok(cli_update_value(
-            &info,
+        let mut payload = enrich_check_payload(
+            serde_json::json!({
+                "status": "staged",
+                "current_version": info.current_version,
+                "latest_version": info.latest_version,
+                "update_available": true,
+                "binary_name": self.updater.binary_name(),
+                "staged_at": downloaded.path().to_string_lossy(),
+                "message": "Update downloaded and staged. It will be applied on the next CLI launch.",
+            }),
             true,
-            "Update downloaded, verified, and staged. Restart the CLI to apply it.",
-        ))
-    }
-
-    async fn cli_check_value(&self) -> anyhow::Result<Value> {
-        let info = self.cli_update_info().await?;
-        let current = parse_version(&info.current_version)?;
-        Ok(cli_update_value(
-            &info,
-            info.latest_version > current,
-            if info.latest_version > current {
-                "A newer CLI version is available."
-            } else {
-                "Already running the latest version."
-            },
-        ))
-    }
-
-    async fn cli_update_info(&self) -> anyhow::Result<CliUpdateInfo> {
-        let UpdateSource::Cli {
-            binary_name,
-            current_version,
-            ..
-        } = &self.source
-        else {
-            anyhow::bail!("the selected update source is not the CLI release manifest");
-        };
-        let manifest_url = cli_manifest_url()?;
-        let response = self
-            .cli_client()
-            .get(manifest_url.clone())
-            .send()
-            .await?
-            .error_for_status()?;
-        if response
-            .content_length()
-            .is_some_and(|length| length > MAX_MANIFEST_BYTES)
-        {
-            anyhow::bail!("CLI update manifest exceeds the {MAX_MANIFEST_BYTES}-byte safety limit");
+            "live",
+            unix_timestamp(),
+        );
+        if let Some(marker) = package_manager {
+            payload["package_manager"] = package_manager_advisory(&marker);
         }
-        let bytes = response.bytes().await?;
-        if bytes.is_empty() || bytes.len() as u64 > MAX_MANIFEST_BYTES {
-            anyhow::bail!("CLI update manifest is empty or exceeds the safety limit");
-        }
-        let manifest: Value =
-            serde_json::from_slice(&bytes).context("decode CLI update manifest")?;
-        let entry = manifest
-            .get(binary_name)
-            .or_else(|| manifest.get("dccmcp"))
-            .or_else(|| manifest.get("dcc-mcp-cli"))
-            .cloned()
-            .context("CLI update manifest has no entry for dccmcp")?;
-        let entry: CliManifestEntry =
-            serde_json::from_value(entry).context("decode CLI update manifest entry")?;
-        let latest_version = parse_version(&entry.version)?;
-        let download_url = Url::parse(&entry.url).context("invalid CLI update download URL")?;
-        validate_download_url(&manifest_url, &download_url)?;
-        let sha256 = normalize_sha256(&entry.sha256)?;
-
-        Ok(CliUpdateInfo {
-            binary_name: binary_name.clone(),
-            current_version: current_version.clone(),
-            latest_version,
-            latest_version_text: entry.version,
-            download_url,
-            sha256,
-            release_notes: entry.release_notes,
-            manifest_url,
-        })
-    }
-
-    fn cli_client(&self) -> &reqwest::Client {
-        match &self.source {
-            UpdateSource::Cli { client, .. } => client,
-            UpdateSource::Gateway(_) => unreachable!("gateway updates do not use the CLI client"),
-        }
+        payload["version_status"] = Value::String("staged".into());
+        Ok(payload)
     }
 }
 
-fn is_cli_binary(name: &str) -> bool {
-    matches!(name, "dccmcp" | "dcc-mcp-cli")
-}
-
-fn cli_manifest_url() -> anyhow::Result<Url> {
-    let value = std::env::var(CLI_MANIFEST_ENV)
-        .ok()
-        .filter(|value| !value.trim().is_empty())
-        .unwrap_or_else(|| {
-            format!(
-                "https://github.com/{CLI_REPOSITORY}/releases/latest/download/dcc-mcp-update-manifest-{}.json",
-                release_platform()
-            )
-        });
-    let url = Url::parse(&value).context("invalid CLI update manifest URL")?;
-    if url.scheme() != "https" && !is_loopback_url(&url) {
-        anyhow::bail!("CLI update manifest must use HTTPS, except for a loopback test endpoint");
-    }
-    Ok(url)
-}
-
-fn validate_download_url(manifest_url: &Url, download_url: &Url) -> anyhow::Result<()> {
-    if download_url.scheme() != "https" && !is_loopback_url(download_url) {
-        anyhow::bail!("CLI update download must use HTTPS, except for a loopback test endpoint");
-    }
-    let manifest_host = manifest_url.host_str();
-    let download_host = download_url.host_str();
-    if manifest_host != download_host
-        && !matches!(
-            download_host,
-            Some("github.com" | "objects.githubusercontent.com")
-        )
-    {
-        anyhow::bail!("CLI update download host does not match the release manifest");
-    }
-    Ok(())
-}
-
-fn is_loopback_url(url: &Url) -> bool {
-    matches!(url.scheme(), "http" | "https")
-        && url
-            .host_str()
-            .is_some_and(|host| matches!(host, "127.0.0.1" | "localhost" | "::1"))
-}
-
-fn release_platform() -> &'static str {
-    if cfg!(all(target_os = "windows", target_arch = "x86_64")) {
-        "windows-x86_64"
-    } else if cfg!(all(target_os = "linux", target_arch = "x86_64")) {
-        "linux-x86_64"
-    } else if cfg!(all(
-        target_os = "macos",
-        any(target_arch = "x86_64", target_arch = "aarch64")
-    )) {
-        "macos-universal2"
+fn enrich_check_payload(
+    mut payload: Value,
+    success: bool,
+    source: &str,
+    checked_at_unix_secs: u64,
+) -> Value {
+    let Some(object) = payload.as_object_mut() else {
+        return payload;
+    };
+    let update_available = object
+        .get("update_available")
+        .and_then(Value::as_bool)
+        .unwrap_or(false);
+    let binary_name = object
+        .get("binary_name")
+        .and_then(Value::as_str)
+        .unwrap_or(runtime_cli_name())
+        .to_string();
+    let version_status = if !success {
+        "check_failed"
+    } else if update_available {
+        "update_available"
     } else {
-        "unsupported"
+        "up_to_date"
+    };
+    object.insert(
+        "version_status".into(),
+        Value::String(version_status.into()),
+    );
+    object.insert(
+        "check".into(),
+        serde_json::json!({
+            "source": source,
+            "checked_at_unix_secs": checked_at_unix_secs,
+            "cache_age_secs": 0,
+            "next_check_after_secs": if success {
+                SUCCESS_CHECK_INTERVAL_SECS
+            } else {
+                FAILURE_RETRY_INTERVAL_SECS
+            },
+        }),
+    );
+    object.insert(
+        "compatibility".into(),
+        serde_json::json!({
+            "status": if !success {
+                "unknown"
+            } else if update_available {
+                "eligible"
+            } else {
+                "current"
+            },
+            "target": platform_target(),
+            "basis": if update_available {
+                "gateway_manifest_asset"
+            } else {
+                "version_check"
+            },
+        }),
+    );
+    let manager = crate::application::package_manager::detect().map(|marker| marker.manager);
+    object.insert(
+        "update_policy".into(),
+        update_policy(&binary_name, manager.as_deref()),
+    );
+    payload
+}
+
+pub(super) fn mark_cached(mut payload: Value, cache_age_secs: u64) -> Value {
+    if let Some(check) = payload.get_mut("check").and_then(Value::as_object_mut) {
+        check.insert("source".into(), Value::String("cache".into()));
+        check.insert("cache_age_secs".into(), cache_age_secs.into());
     }
+    payload
 }
 
-fn parse_version(value: &str) -> anyhow::Result<Version> {
-    Version::parse(value.trim_start_matches('v'))
-        .with_context(|| format!("invalid semantic version: {value}"))
-}
-
-fn cli_update_value(info: &CliUpdateInfo, update_available: bool, message: &str) -> Value {
+/// Describe how an update may be applied for one binary.
+///
+/// `manager` is passed in rather than re-detected so callers can describe a
+/// package-managed install without one being present on the current process.
+fn update_policy(binary_name: &str, manager: Option<&str>) -> Value {
+    let is_cli = matches!(binary_name, "dccmcp" | "dcc-mcp-cli");
+    // Self-update works for package-managed installs too; `manager` only
+    // records provenance so callers can re-sync the manager's metadata.
+    // A single `dcc-mcp-cli update` checks, downloads, and stages the release,
+    // so no separate user-confirmation step is required.
+    let apply_supported = is_cli;
     serde_json::json!({
-        "status": if update_available { "update-available" } else { "up-to-date" },
-        "update_available": update_available,
-        "binary_name": info.binary_name,
-        "current_version": info.current_version,
-        "latest_version": info.latest_version_text,
-        "download_url": info.download_url,
-        "sha256": info.sha256,
-        "release_notes": info.release_notes,
-        "manifest_url": info.manifest_url,
-        "source": "official-cli-release-manifest",
-        "message": message,
+        "requires_user_confirmation": false,
+        "apply_supported_by_this_command": apply_supported,
+        "apply_command": apply_supported.then_some(CLI_UPDATE_COMMAND),
+        "staged_for_next_launch": true,
+        "running_server_restarted": false,
+        "managed_by_package_manager": manager,
     })
 }
 
-fn normalize_sha256(value: &str) -> anyhow::Result<String> {
-    let normalized = value.trim().to_ascii_lowercase();
-    if normalized.len() != 64 || !normalized.bytes().all(|byte| byte.is_ascii_hexdigit()) {
-        anyhow::bail!("CLI update manifest contains an invalid SHA-256 digest");
+/// Describe the package manager that installed this copy.
+///
+/// Attached to a staged self-update so callers can re-sync the manager's
+/// metadata: the update will replace the binary in place on the next
+/// launch, so the version the manager recorded falls behind it.
+fn package_manager_advisory(marker: &PackageManagerMarker) -> Value {
+    serde_json::json!({
+        "manager": marker.manager,
+        "distribution": marker.distribution,
+        "recorded_version": marker.version,
+        "marker": crate::application::package_manager::MARKER_FILE_NAME,
+        "advisory": marker.advisory_message(),
+    })
+}
+
+fn platform_target() -> String {
+    format!("{}-{}", std::env::consts::OS, std::env::consts::ARCH)
+}
+
+fn unix_timestamp() -> u64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn successful_checks_expose_agent_update_contract() {
+        let payload = enrich_check_payload(
+            serde_json::json!({
+                "update_available": true,
+                "current_version": "0.20.22",
+                "latest_version": "0.20.23",
+                "binary_name": runtime_cli_name(),
+                "download_url": "https://example.invalid/dcc-mcp-cli",
+                "sha256": "a".repeat(64),
+            }),
+            true,
+            "live",
+            42,
+        );
+
+        assert_eq!(payload["version_status"], "update_available");
+        assert_eq!(payload["check"]["source"], "live");
+        assert_eq!(payload["check"]["checked_at_unix_secs"], 42);
+        assert_eq!(payload["compatibility"]["status"], "eligible");
+        assert_eq!(
+            payload["update_policy"]["requires_user_confirmation"],
+            false
+        );
+        assert_eq!(
+            payload["update_policy"]["apply_command"],
+            "dcc-mcp-cli update"
+        );
+        assert_eq!(payload["update_policy"]["running_server_restarted"], false);
     }
-    Ok(normalized)
+
+    #[test]
+    fn package_managed_installs_still_allow_apply() {
+        let marker = crate::application::package_manager::PackageManagerMarker {
+            schema_version: crate::application::package_manager::MARKER_SCHEMA_VERSION,
+            distribution: "dcc-mcp-cli".into(),
+            manager: "pypi".into(),
+            version: "0.20.34".into(),
+            platform: "windows-x86_64".into(),
+            binary: "dcc-mcp-cli-bin.exe".into(),
+        };
+
+        // `update check` must keep pointing agents at the one-command update
+        // even when a package manager installed this copy.
+        let policy = update_policy(runtime_cli_name(), Some(&marker.manager));
+        assert_eq!(policy["apply_supported_by_this_command"], true);
+        assert_eq!(policy["apply_command"], "dcc-mcp-cli update");
+        assert_eq!(policy["requires_user_confirmation"], false);
+        assert_eq!(policy["managed_by_package_manager"], "pypi");
+
+        // A staged self-update reports the version the manager still records.
+        let advisory = package_manager_advisory(&marker);
+        assert_eq!(advisory["manager"], "pypi");
+        assert_eq!(advisory["recorded_version"], "0.20.34");
+        assert_eq!(
+            advisory["marker"],
+            crate::application::package_manager::MARKER_FILE_NAME
+        );
+        assert!(
+            advisory["advisory"]
+                .as_str()
+                .unwrap()
+                .contains("uv tool upgrade dcc-mcp-cli"),
+            "{}",
+            advisory["advisory"]
+        );
+    }
+
+    #[test]
+    fn failed_checks_are_structured_and_retry_sooner() {
+        let payload = enrich_check_payload(
+            serde_json::json!({
+                "status": "manifest_error",
+                "error": "failed_to_fetch_update_manifest",
+                "message": "offline",
+                "update_available": false,
+            }),
+            false,
+            "live",
+            42,
+        );
+
+        assert_eq!(payload["version_status"], "check_failed");
+        assert_eq!(
+            payload["check"]["next_check_after_secs"],
+            FAILURE_RETRY_INTERVAL_SECS
+        );
+        assert_eq!(payload["compatibility"]["status"], "unknown");
+    }
 }

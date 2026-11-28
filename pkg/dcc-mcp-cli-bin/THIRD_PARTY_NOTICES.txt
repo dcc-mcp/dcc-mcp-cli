@@ -1,0 +1,1 @@
+This wheel contains the standalone DCCMCP CLI. THIRD_PARTY_LICENSES.txt lists the Rust dependencies from the release lockfile and their associated licenses.

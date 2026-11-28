@@ -42,6 +42,14 @@ This release completes the post-boundary CLI maintenance flow.
 The `dcc-mcp-cli` executable remains a compatibility alias. The DCC-CUA
 runtime keeps its own version line and release process.
 
+## Version 0.23.0
+
+The `dcc-mcp-cli` Python distribution follows the standalone CLI release line. Its platform wheels provide both console entry points.
+
+Both `dccmcp` and `dcc-mcp-cli` expose the migrated Core CLI commands, including install, verify, uninstall, host, components, feedback and record/replay. The CLI consumes the shared Core SDK from its pinned release. Use `dccmcp mcp` for direct MCP sessions and `dccmcp cua -- <args>` to forward to an independently installed CUA executable.
+
+The CLI and server follow separate version lines. `dccmcp update` checks the CLI repository, downloads the matching executable and verifies its digest. A subsequent operational invocation applies the staged update. Version, help and read-only inspection preserve pending updates. Use `--no-update-maintenance` to suppress background maintenance in a bundled installation.
+
 ## Version 0.21.3
 
 This release aligns the bundled adapter catalog with Core `0.22.0` and keeps
