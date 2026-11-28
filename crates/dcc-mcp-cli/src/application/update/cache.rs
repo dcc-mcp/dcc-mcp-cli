@@ -93,8 +93,12 @@ pub fn is_background_refresh() -> bool {
     env_truthy(BACKGROUND_ENV)
 }
 
+pub fn is_update_restart() -> bool {
+    env_truthy(JUST_APPLIED_ENV)
+}
+
 pub fn just_applied_status() -> Option<Value> {
-    env_truthy(JUST_APPLIED_ENV).then(|| {
+    is_update_restart().then(|| {
         serde_json::json!({
             "version_status": "applied",
             "binary_name": runtime_cli_name(),

@@ -98,7 +98,12 @@ impl CliRelease {
                 .set_permissions(std::fs::Permissions::from_mode(mode))?;
         }
         temporary.as_file().sync_all()?;
-        Updater::stage_verified_update(temporary.path(), &info.binary_name, &info.sha256)?;
+        Updater::stage_verified_update_for_version(
+            temporary.path(),
+            &info.binary_name,
+            &info.sha256,
+            super::CLI_VERSION,
+        )?;
 
         Ok(cli_update_value(
             &info,
